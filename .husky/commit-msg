@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Enforce Conventional Commits format:
+# feat: ..., fix: ..., chore: ..., docs: ..., test: ..., refactor: ...
+COMMIT_MSG=$(cat "$1")
+PATTERN="^(feat|fix|chore|docs|test|refactor|perf|style|ci|build|revert)(\(.+\))?: .{1,72}"
+
+if ! echo "$COMMIT_MSG" | grep -Eq "$PATTERN"; then
+  echo "❌ Invalid commit message format."
+  echo "   Expected: feat(scope): description"
+  echo "   Got:      $COMMIT_MSG"
+  exit 1
+fi

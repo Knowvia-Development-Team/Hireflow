@@ -1,0 +1,13 @@
+# Vite dev server — hot reload, no build step
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci --frozen-lockfile
+
+COPY vite.config.ts tsconfig.json tsconfig.node.json ./
+
+EXPOSE 5173
+
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

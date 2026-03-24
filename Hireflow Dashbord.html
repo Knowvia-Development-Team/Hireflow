@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Hire Flow</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#000000;--bg2:#07070d;--bg3:#0d0d18;
+  --sur:#0f0f1a;--sur2:#141420;
+  --bor:#16162a;--bor2:#22223a;--bor3:#2e2e50;
+  --blue:#2448a5;--blue2:#3a62c8;--blue3:#5a80e8;--blue-dim:#091228;
+  --white:#fff;
+  --g1:rgba(255,255,255,0.88);--g2:rgba(255,255,255,0.52);
+  --g3:rgba(255,255,255,0.26);--g4:rgba(255,255,255,0.1);
+  --green:#34d399;--amber:#fbbf24;--red:#f87171;--purple:#a78bfa;
+  --sans:'Outfit',sans-serif;--serif:'Cormorant Garamond',Georgia,serif;
+  --mono:'DM Mono',monospace;
+  --side:218px;--top:52px;
+}
+html,body{height:100%;overflow:hidden;}
+body{font-family:var(--sans);background:var(--bg);color:var(--white);-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;}
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--bor3);}
+
+/* TOPBAR */
+.topbar{height:var(--top);flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--bor);display:flex;align-items:center;padding:0 18px;gap:14px;z-index:50;}
+.logo{display:flex;align-items:baseline;gap:4px;text-decoration:none;}
+.logo .h{font-family:var(--serif);font-weight:500;letter-spacing:3px;text-transform:uppercase;font-size:0.7rem;color:var(--g1);}
+.logo .f{font-family:var(--serif);font-weight:300;font-style:italic;font-size:1.28rem;color:var(--white);}
+.top-div{width:1px;height:16px;background:var(--bor2);}
+.top-search{display:flex;align-items:center;gap:8px;background:var(--sur);border:1px solid var(--bor);border-radius:6px;padding:5px 12px;flex:1;max-width:300px;}
+.top-search input{background:none;border:none;outline:none;font-family:var(--sans);font-size:0.8rem;color:var(--g2);width:100%;}
+.top-search input::placeholder{color:var(--g3);}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.top-btn{width:30px;height:30px;border-radius:7px;background:var(--sur);border:1px solid var(--bor);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--g2);font-size:0.85rem;transition:all 0.15s;position:relative;}
+.top-btn:hover{border-color:var(--bor2);color:var(--g1);}
+.notif-dot{position:absolute;top:-2px;right:-2px;width:7px;height:7px;border-radius:50%;background:var(--blue2);border:1.5px solid var(--bg2);}
+.top-avatar{width:30px;height:30px;border-radius:8px;background:var(--blue-dim);border:1px solid var(--blue);display:flex;align-items:center;justify-content:center;font-size:0.68rem;font-weight:600;color:var(--blue2);cursor:pointer;}
+.theme-toggle{display:flex;align-items:center;gap:6px;background:var(--sur);border:1px solid var(--bor);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:0.72rem;font-family:var(--mono);color:var(--g3);transition:all 0.15s;}
+.theme-toggle:hover{border-color:var(--bor2);color:var(--g2);}
+
+/* BODY */
+.body{display:flex;flex:1;overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:var(--side);flex-shrink:0;background:var(--bg2);border-right:1px solid var(--bor);display:flex;flex-direction:column;overflow-y:auto;padding:14px 0 20px;}
+.sidebar::-webkit-scrollbar{width:0;}
+.nav-grp{margin-bottom:20px;}
+.nav-lbl{font-family:var(--mono);font-size:0.56rem;letter-spacing:2.5px;text-transform:uppercase;color:var(--g3);padding:0 14px;margin-bottom:3px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 14px;font-size:0.82rem;color:var(--g2);cursor:pointer;border-left:2px solid transparent;transition:all 0.15s;user-select:none;}
+.nav-item:hover{color:var(--g1);background:var(--sur);}
+.nav-item.active{color:var(--white);background:var(--bg3);border-left-color:var(--blue2);}
+.nav-icon{width:16px;text-align:center;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.nav-badge{margin-left:auto;background:var(--blue-dim);color:var(--blue2);font-family:var(--mono);font-size:0.58rem;padding:1px 6px;border-radius:8px;}
+.sidebar-foot{margin-top:auto;padding:0 10px;}
+.s-user{display:flex;align-items:center;gap:9px;padding:10px;border-radius:8px;background:var(--sur);border:1px solid var(--bor);cursor:pointer;}
+.s-av{width:26px;height:26px;border-radius:7px;background:var(--blue-dim);display:flex;align-items:center;justify-content:center;font-size:0.64rem;font-weight:600;color:var(--blue2);flex-shrink:0;}
+.s-name{font-size:0.8rem;font-weight:500;color:var(--g1);}
+.s-role{font-family:var(--mono);font-size:0.6rem;color:var(--g3);}
+.s-dots{margin-left:auto;color:var(--g3);font-size:0.8rem;}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;background:var(--bg);}
+.view{display:none;padding:26px 28px 60px;animation:fadeIn 0.22s ease both;}
+.view.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+/* PAGE HEADER */
+.pg-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;}
+.pg-tag{font-family:var(--mono);font-size:0.6rem;letter-spacing:2.5px;text-transform:uppercase;color:var(--g3);margin-bottom:5px;}
+.pg-title{font-family:var(--serif);font-size:1.9rem;font-weight:400;letter-spacing:-0.5px;color:var(--white);line-height:1.05;}
+.pg-title em{font-style:italic;color:var(--g2);}
+.pg-sub{font-size:0.8rem;font-weight:300;color:var(--g3);margin-top:3px;}
+.pg-actions{display:flex;gap:8px;align-items:center;flex-shrink:0;}
+
+/* BUTTONS */
+.btn{font-family:var(--sans);font-size:0.8rem;font-weight:500;padding:7px 15px;border-radius:6px;cursor:pointer;transition:all 0.15s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;border:none;}
+.btn:hover{transform:translateY(-1px);}
+.btn-primary{background:var(--blue);color:var(--white);}
+.btn-primary:hover{background:var(--blue2);}
+.btn-ghost{background:transparent;color:var(--g2);border:1px solid var(--bor2);}
+.btn-ghost:hover{color:var(--g1);border-color:var(--bor3);}
+.btn-sm{padding:5px 11px;font-size:0.75rem;}
+.btn-danger{background:transparent;color:var(--red);border:1px solid rgba(248,113,113,0.25);}
+
+/* CARDS */
+.card{background:var(--sur);border:1px solid var(--bor);border-radius:12px;overflow:hidden;}
+.card-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--bor);}
+.card-title{font-size:0.85rem;font-weight:600;color:var(--g1);}
+.card-link{font-family:var(--mono);font-size:0.62rem;color:var(--g3);cursor:pointer;transition:color 0.15s;}
+.card-link:hover{color:var(--g2);}
+
+/* STAT CARDS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+.stat{background:var(--sur);border:1px solid var(--bor);border-radius:11px;padding:18px 18px 14px;transition:border-color 0.15s;}
+.stat:hover{border-color:var(--bor2);}
+.stat-lbl{font-family:var(--mono);font-size:0.58rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--g3);margin-bottom:10px;}
+.stat-num{font-family:var(--serif);font-size:2.1rem;font-weight:400;color:var(--white);letter-spacing:-0.5px;line-height:1;}
+.stat-sub{font-size:0.72rem;color:var(--g3);margin-top:5px;display:flex;align-items:center;gap:4px;}
+.up{color:var(--green);}
+.dn{color:var(--red);}
+
+/* TWO/THREE COL */
+.two-col{display:grid;grid-template-columns:1.6fr 1fr;gap:14px;margin-bottom:14px;}
+.two-col-even{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+
+/* CHARTS */
+.mini-chart{padding:16px 18px 18px;}
+.chart-label{font-family:var(--mono);font-size:0.58rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--g3);margin-bottom:12px;}
+.line-chart-wrap{height:72px;display:flex;align-items:flex-end;gap:4px;position:relative;}
+.lc-axis{position:absolute;bottom:0;left:0;right:0;height:1px;background:var(--bor);}
+.lc-bar{flex:1;border-radius:2px 2px 0 0;background:var(--blue);opacity:0.5;transition:opacity 0.2s;}
+.lc-bar:hover{opacity:1;}
+.chart-row{display:flex;align-items:flex-end;gap:3px;height:72px;position:relative;}
+.chart-months{display:flex;justify-content:space-between;margin-top:6px;}
+.chart-month{font-family:var(--mono);font-size:0.56rem;color:var(--g3);}
+
+/* PIPELINE HEALTH */
+.pipe-rows{padding:14px 18px;display:flex;flex-direction:column;gap:10px;}
+.pipe-row{display:flex;align-items:center;gap:10px;}
+.pipe-lbl{font-size:0.78rem;color:var(--g2);min-width:92px;}
+.pipe-track{flex:1;height:4px;background:var(--bor);border-radius:2px;overflow:hidden;}
+.pipe-fill{height:100%;border-radius:2px;background:var(--blue2);}
+.pipe-num{font-family:var(--mono);font-size:0.62rem;color:var(--g3);min-width:26px;text-align:right;}
+
+/* QUALITY SIGNAL */
+.quality-grid{padding:14px 18px;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.qs-item{background:var(--bg3);border:1px solid var(--bor2);border-radius:8px;padding:12px;}
+.qs-label{font-family:var(--mono);font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--g3);margin-bottom:6px;}
+.qs-val{font-family:var(--serif);font-size:1.5rem;font-weight:400;color:var(--white);letter-spacing:-0.3px;}
+.qs-sub{font-size:0.72rem;color:var(--g3);margin-top:2px;}
+
+/* COMM HEALTH */
+.comm-rows{padding:14px 18px;display:flex;flex-direction:column;gap:8px;}
+.comm-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg3);border:1px solid var(--bor);border-radius:8px;}
+.comm-left{display:flex;align-items:center;gap:10px;}
+.comm-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.comm-text{font-size:0.82rem;color:var(--g2);}
+.comm-num{font-family:var(--mono);font-size:0.7rem;padding:2px 8px;border-radius:10px;}
+.comm-warn{background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);color:var(--amber);}
+.comm-ok{background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.2);color:var(--green);}
+.comm-bad{background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);color:var(--red);}
+
+/* ACTIVITY */
+.act-list{padding:4px 0;}
+.act-item{display:flex;align-items:flex-start;gap:10px;padding:10px 18px;border-bottom:1px solid var(--bor);transition:background 0.15s;cursor:default;}
+.act-item:last-child{border-bottom:none;}
+.act-item:hover{background:var(--bg3);}
+.act-dot{width:7px;height:7px;border-radius:50%;margin-top:5px;flex-shrink:0;}
+.act-body{flex:1;}
+.act-text{font-size:0.82rem;color:var(--g2);line-height:1.5;}
+.act-text strong{color:var(--g1);font-weight:500;}
+.act-time{font-family:var(--mono);font-size:0.62rem;color:var(--g3);margin-top:1px;}
+
+/* TABLES */
+.tbl-wrap{overflow-x:auto;}
+table.tbl{width:100%;border-collapse:collapse;}
+.tbl th{font-family:var(--mono);font-size:0.6rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--g3);text-align:left;padding:9px 14px;border-bottom:1px solid var(--bor);font-weight:400;}
+.tbl td{padding:11px 14px;border-bottom:1px solid var(--bor);font-size:0.82rem;color:var(--g2);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:var(--bg3);cursor:pointer;}
+.td-strong{color:var(--g1);font-weight:500;}
+
+/* STATUS PILLS */
+.pill{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:0.6rem;letter-spacing:0.5px;padding:2px 8px;border-radius:10px;}
+.pill-dot{width:4px;height:4px;border-radius:50%;background:currentColor;}
+.pill-open{background:rgba(52,211,153,0.07);color:var(--green);border:1px solid rgba(52,211,153,0.2);}
+.pill-draft{background:rgba(251,191,36,0.07);color:var(--amber);border:1px solid rgba(251,191,36,0.2);}
+.pill-closed{background:var(--bg3);color:var(--g3);border:1px solid var(--bor2);}
+.pill-blue{background:var(--blue-dim);color:var(--blue2);border:1px solid rgba(58,98,200,0.3);}
+.dept-tag{font-family:var(--mono);font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:4px;background:var(--bg3);border:1px solid var(--bor2);color:var(--g3);}
+
+/* FILTERS */
+.filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.filter{font-family:var(--mono);font-size:0.62rem;letter-spacing:0.5px;padding:5px 12px;border-radius:5px;background:var(--sur);border:1px solid var(--bor);color:var(--g3);cursor:pointer;transition:all 0.15s;}
+.filter:hover{color:var(--g2);border-color:var(--bor2);}
+.filter.active{background:var(--blue-dim);border-color:var(--blue);color:var(--blue2);}
+
+/* CANDIDATE ROWS */
+.cand-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--bor);transition:background 0.15s;cursor:pointer;}
+.cand-row:hover{background:var(--bg3);}
+.cand-row:last-child{border-bottom:none;}
+.cand-av{width:32px;height:32px;border-radius:9px;background:var(--blue-dim);display:flex;align-items:center;justify-content:center;font-size:0.68rem;font-weight:600;color:var(--blue2);flex-shrink:0;}
+.cand-info{flex:1;}
+.cand-name{font-size:0.84rem;font-weight:600;color:var(--g1);}
+.cand-role{font-size:0.74rem;color:var(--g3);}
+.score-pips{display:flex;gap:2px;}
+.pip{width:5px;height:13px;border-radius:2px;}
+
+/* CANDIDATE PROFILE */
+.profile-layout{display:grid;grid-template-columns:300px 1fr;gap:16px;}
+.profile-left{display:flex;flex-direction:column;gap:14px;}
+.profile-card{background:var(--sur);border:1px solid var(--bor);border-radius:12px;padding:20px;}
+.profile-avatar{width:56px;height:56px;border-radius:14px;background:var(--blue-dim);border:1px solid var(--blue);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:1.6rem;font-weight:400;font-style:italic;color:var(--blue2);margin-bottom:14px;}
+.profile-name{font-size:1.05rem;font-weight:600;color:var(--white);margin-bottom:3px;}
+.profile-role{font-family:var(--mono);font-size:0.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--blue2);margin-bottom:12px;}
+.profile-stage{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg3);border:1px solid var(--bor);border-radius:7px;font-size:0.78rem;color:var(--g2);margin-bottom:10px;}
+.profile-quick{display:flex;gap:6px;flex-wrap:wrap;}
+
+/* CV MATCH */
+.cv-match{background:var(--sur);border:1px solid var(--bor);border-radius:12px;overflow:hidden;}
+.cv-match-top{padding:18px;border-bottom:1px solid var(--bor);display:flex;align-items:center;gap:16px;}
+.cv-score-ring{width:72px;height:72px;flex-shrink:0;position:relative;}
+.cv-score-ring svg{width:100%;height:100%;transform:rotate(-90deg);}
+.cv-ring-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;}
+.cv-big-num{font-family:var(--serif);font-size:1.6rem;font-weight:400;color:var(--white);line-height:1;}
+.cv-denom{font-family:var(--mono);font-size:0.58rem;color:var(--g3);}
+.cv-verdict{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:0.6rem;letter-spacing:0.5px;padding:2px 9px;border-radius:10px;margin-top:6px;}
+.cv-dims{padding:14px 18px;display:flex;flex-direction:column;gap:9px;}
+.cv-dim-row{display:flex;align-items:center;gap:10px;}
+.cv-dim-name{font-size:0.76rem;color:var(--g2);min-width:105px;}
+.cv-dim-track{flex:1;height:3px;background:var(--bor);border-radius:2px;overflow:hidden;}
+.cv-dim-fill{height:100%;border-radius:2px;}
+.cv-dim-score{font-family:var(--mono);font-size:0.62rem;color:var(--g3);min-width:22px;text-align:right;}
+
+/* SKILLS */
+.skills-wrap{padding:14px 18px;}
+.skill-cloud{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.skill-tag{font-family:var(--mono);font-size:0.62rem;letter-spacing:0.5px;padding:3px 10px;border-radius:4px;border:1px solid;}
+.skill-match{background:rgba(52,211,153,0.07);border-color:rgba(52,211,153,0.25);color:var(--green);}
+.skill-partial{background:rgba(251,191,36,0.07);border-color:rgba(251,191,36,0.25);color:var(--amber);}
+.skill-miss{background:var(--bg3);border-color:var(--bor2);color:var(--g3);}
+.skill-legend{display:flex;gap:14px;margin-bottom:8px;}
+.sl-item{display:flex;align-items:center;gap:5px;font-size:0.72rem;}
+.sl-dot{width:7px;height:7px;border-radius:2px;}
+
+/* CONTACT */
+.contact-rows{display:flex;flex-direction:column;gap:6px;}
+.contact-row{display:flex;align-items:center;gap:8px;font-size:0.8rem;color:var(--g2);}
+.contact-icon{color:var(--g3);width:14px;flex-shrink:0;}
+
+/* EDUCATION */
+.edu-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--bor);}
+.edu-item:last-child{border-bottom:none;}
+.edu-dot{width:8px;height:8px;border-radius:50%;background:var(--blue);margin-top:4px;flex-shrink:0;}
+.edu-degree{font-size:0.84rem;font-weight:600;color:var(--g1);margin-bottom:2px;}
+.edu-meta{font-size:0.76rem;color:var(--g3);}
+
+/* EXPERIENCE */
+.exp-item{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--bor);}
+.exp-item:last-child{border-bottom:none;}
+.exp-line{display:flex;flex-direction:column;align-items:center;gap:0;}
+.exp-dot{width:9px;height:9px;border-radius:50%;background:var(--blue);flex-shrink:0;border:1.5px solid var(--bg);}
+.exp-connector{width:1px;flex:1;background:var(--bor2);margin-top:2px;}
+.exp-title{font-size:0.86rem;font-weight:600;color:var(--g1);margin-bottom:2px;}
+.exp-company{font-size:0.78rem;color:var(--blue2);margin-bottom:4px;}
+.exp-dates{font-family:var(--mono);font-size:0.62rem;color:var(--g3);margin-bottom:6px;}
+.exp-desc{font-size:0.78rem;font-weight:300;color:var(--g3);line-height:1.65;}
+.ai-flag{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:0.58rem;letter-spacing:0.5px;padding:1px 7px;border-radius:3px;background:var(--blue-dim);border:1px solid rgba(58,98,200,0.3);color:var(--blue2);margin-left:8px;}
+
+/* INTERVIEW SCHEDULE */
+.schedule-layout{display:grid;grid-template-columns:280px 1fr;gap:16px;}
+.avail-card{background:var(--sur);border:1px solid var(--bor);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:14px;}
+.avail-title{font-size:0.85rem;font-weight:600;color:var(--g1);margin-bottom:4px;}
+.avail-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bor);}
+.avail-row:last-child{border-bottom:none;}
+.avail-label{font-size:0.78rem;color:var(--g2);}
+.avail-val{font-family:var(--mono);font-size:0.7rem;color:var(--blue2);}
+.day-toggle-row{display:flex;gap:4px;}
+.day-btn{width:30px;height:26px;border-radius:5px;border:1px solid var(--bor2);background:var(--bg3);font-family:var(--mono);font-size:0.62rem;color:var(--g3);cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;}
+.day-btn.on{background:var(--blue-dim);border-color:var(--blue);color:var(--blue2);}
+
+/* CALENDAR */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.cal-month{font-family:var(--serif);font-size:1.3rem;font-weight:400;color:var(--white);}
+.cal-nav-btns{display:flex;gap:6px;}
+.cal-nav-btn{width:28px;height:28px;border-radius:6px;background:var(--sur);border:1px solid var(--bor);color:var(--g2);font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.cal-nav-btn:hover{border-color:var(--bor2);color:var(--g1);}
+.week-grid{display:grid;grid-template-columns:50px repeat(5,1fr);gap:0;background:var(--sur);border:1px solid var(--bor);border-radius:12px;overflow:hidden;}
+.wg-header{padding:10px 8px;border-bottom:1px solid var(--bor);font-family:var(--mono);font-size:0.62rem;letter-spacing:1px;text-transform:uppercase;color:var(--g3);text-align:center;}
+.wg-time{padding:0;border-right:1px solid var(--bor);}
+.wg-time-slot{height:52px;display:flex;align-items:flex-start;justify-content:flex-end;padding:4px 8px;border-bottom:1px solid var(--bor);font-family:var(--mono);font-size:0.58rem;color:var(--g3);}
+.wg-col{position:relative;border-right:1px solid var(--bor);}
+.wg-col:last-child{border-right:none;}
+.wg-slot{height:52px;border-bottom:1px solid var(--bor);position:relative;}
+.wg-slot:last-child{border-bottom:none;}
+.interview-block{position:absolute;left:3px;right:3px;border-radius:5px;padding:4px 7px;cursor:pointer;overflow:hidden;transition:filter 0.15s;}
+.interview-block:hover{filter:brightness(1.15);}
+.ib-name{font-size:0.72rem;font-weight:600;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ib-role{font-size:0.64rem;color:rgba(255,255,255,0.65);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ib-screen{background:#1a3a5a;}
+.ib-tech{background:#1a3a2a;}
+.ib-final{background:#2448a5;}
+
+/* CONNECTIONS */
+.conn-layout{display:grid;grid-template-columns:260px 1fr;gap:14px;height:calc(100vh - 180px);}
+.conn-list{background:var(--sur);border:1px solid var(--bor);border-radius:12px;overflow-y:auto;display:flex;flex-direction:column;}
+.conn-list::-webkit-scrollbar{width:0;}
+.conn-list-hd{padding:12px 14px;border-bottom:1px solid var(--bor);font-size:0.84rem;font-weight:600;color:var(--g1);display:flex;align-items:center;justify-content:space-between;}
+.conn-item{padding:12px 14px;border-bottom:1px solid var(--bor);cursor:pointer;transition:background 0.15s;}
+.conn-item:hover{background:var(--bg3);}
+.conn-item.active{background:var(--bg3);border-left:2px solid var(--blue2);}
+.conn-item:last-child{border-bottom:none;}
+.ci-name{font-size:0.82rem;font-weight:600;color:var(--g1);margin-bottom:2px;}
+.ci-subject{font-size:0.76rem;color:var(--g2);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ci-preview{font-size:0.7rem;color:var(--g3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ci-time{font-family:var(--mono);font-size:0.6rem;color:var(--g3);float:right;}
+.unread-dot{width:6px;height:6px;border-radius:50%;background:var(--blue2);display:inline-block;margin-right:5px;}
+.email-pane{background:var(--sur);border:1px solid var(--bor);border-radius:12px;display:flex;flex-direction:column;overflow:hidden;}
+.email-top{padding:18px 22px;border-bottom:1px solid var(--bor);}
+.email-subject{font-family:var(--serif);font-size:1.3rem;font-weight:400;color:var(--white);margin-bottom:10px;}
+.email-from{display:flex;align-items:center;gap:10px;}
+.email-av{width:26px;height:26px;border-radius:7px;background:var(--blue-dim);display:flex;align-items:center;justify-content:center;font-size:0.62rem;font-weight:600;color:var(--blue2);}
+.email-sender-name{font-size:0.82rem;font-weight:500;color:var(--g1);}
+.email-addr{font-size:0.72rem;color:var(--g3);}
+.email-time{margin-left:auto;font-family:var(--mono);font-size:0.62rem;color:var(--g3);}
+.email-body-wrap{flex:1;overflow-y:auto;padding:20px 22px;}
+.email-body-wrap p{font-size:0.86rem;font-weight:300;color:var(--g2);line-height:1.8;margin-bottom:12px;}
+.email-compose{padding:14px 18px;border-top:1px solid var(--bor);display:flex;flex-direction:column;gap:10px;}
+.compose-toolbar{display:flex;gap:8px;align-items:center;}
+.compose-type{font-family:var(--mono);font-size:0.62rem;padding:3px 10px;border-radius:5px;cursor:pointer;border:1px solid var(--bor2);background:var(--bg3);color:var(--g3);transition:all 0.15s;}
+.compose-type.active{background:var(--blue-dim);border-color:var(--blue);color:var(--blue2);}
+.compose-input{background:var(--bg);border:1px solid var(--bor2);border-radius:7px;padding:10px 14px;font-family:var(--sans);font-size:0.84rem;color:var(--g1);outline:none;resize:none;height:60px;transition:border-color 0.15s;}
+.compose-input:focus{border-color:var(--blue);height:100px;}
+.compose-footer{display:flex;align-items:center;justify-content:space-between;}
+.template-select{font-family:var(--mono);font-size:0.62rem;color:var(--g3);background:var(--sur);border:1px solid var(--bor);border-radius:5px;padding:4px 10px;cursor:pointer;outline:none;}
+
+/* SETTINGS */
+.settings-layout{display:grid;grid-template-columns:190px 1fr;gap:20px;}
+.settings-nav{display:flex;flex-direction:column;gap:2px;}
+.settings-nav-item{padding:7px 12px;border-radius:7px;font-size:0.82rem;color:var(--g2);cursor:pointer;transition:all 0.15s;border-left:2px solid transparent;}
+.settings-nav-item:hover{background:var(--sur);color:var(--g1);}
+.settings-nav-item.active{background:var(--sur);color:var(--white);border-left-color:var(--blue2);}
+.settings-section{background:var(--sur);border:1px solid var(--bor);border-radius:12px;overflow:hidden;margin-bottom:14px;}
+.settings-sec-hd{padding:14px 18px;border-bottom:1px solid var(--bor);font-size:0.84rem;font-weight:600;color:var(--g1);}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid var(--bor);}
+.settings-row:last-child{border-bottom:none;}
+.sr-label{font-size:0.84rem;font-weight:500;color:var(--g1);margin-bottom:2px;}
+.sr-sub{font-size:0.74rem;color:var(--g3);}
+.toggle{width:36px;height:19px;border-radius:10px;background:var(--bor2);border:none;cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;}
+.toggle.on{background:var(--blue);}
+.toggle::after{content:'';position:absolute;width:13px;height:13px;border-radius:50%;background:white;top:3px;left:3px;transition:transform 0.2s;}
+.toggle.on::after{transform:translateX(17px);}
+.settings-input{background:var(--bg);border:1px solid var(--bor2);border-radius:6px;padding:7px 12px;font-family:var(--sans);font-size:0.82rem;color:var(--g1);outline:none;width:200px;transition:border-color 0.15s;}
+.settings-input:focus{border-color:var(--blue);}
+.settings-select{background:var(--bg);border:1px solid var(--bor2);border-radius:6px;padding:7px 12px;font-family:var(--sans);font-size:0.82rem;color:var(--g1);outline:none;width:200px;appearance:none;cursor:pointer;}
+
+/* MODAL */
+.modal-back{position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center;}
+.modal-back.open{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--bor2);border-radius:14px;width:500px;max-width:92vw;max-height:85vh;overflow-y:auto;animation:modalIn 0.18s ease both;}
+@keyframes modalIn{from{opacity:0;transform:scale(0.95);}to{opacity:1;transform:scale(1);}}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--bor);}
+.modal-title{font-family:var(--serif);font-size:1.25rem;font-weight:400;color:var(--white);}
+.modal-x{width:26px;height:26px;border-radius:6px;background:var(--sur);border:1px solid var(--bor);color:var(--g2);cursor:pointer;font-size:0.95rem;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.modal-x:hover{border-color:var(--bor2);}
+.modal-body{padding:18px 20px;display:flex;flex-direction:column;gap:14px;}
+.form-field{display:flex;flex-direction:column;gap:5px;}
+.form-label{font-family:var(--mono);font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--g3);}
+.form-input{background:var(--bg);border:1px solid var(--bor2);border-radius:7px;padding:9px 12px;font-family:var(--sans);font-size:0.84rem;color:var(--g1);outline:none;transition:border-color 0.15s;}
+.form-input:focus{border-color:var(--blue);}
+.form-select{background:var(--bg);border:1px solid var(--bor2);border-radius:7px;padding:9px 12px;font-family:var(--sans);font-size:0.84rem;color:var(--g1);outline:none;width:100%;appearance:none;cursor:pointer;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--bor);display:flex;justify-content:flex-end;gap:8px;}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <a class="logo" href="hireflow.html"><span class="h">Hire</span><span class="f">Flow</span></a>
+  <div class="top-div"></div>
+  <div class="top-search">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--g3);flex-shrink:0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" placeholder="Search candidates, jobs, emails..."/>
+    <span style="font-family:var(--mono);font-size:0.58rem;color:var(--g3);border:1px solid var(--bor2);padding:1px 5px;border-radius:3px;">⌘K</span>
+  </div>
+  <div class="top-right">
+    <div class="theme-toggle" onclick="toggleTheme()" id="theme-btn">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      Light
+    </div>
+    <div class="top-btn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span class="notif-dot"></span>
+    </div>
+    <div class="top-btn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <div class="top-avatar">TD</div>
+  </div>
+</div>
+
+<div class="body">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="nav-grp">
+    <div class="nav-lbl">Main</div>
+    <div class="nav-item active" onclick="showView('dashboard')">
+      <span class="nav-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>
+      Dashboard
+    </div>
+    <div class="nav-item" onclick="showView('candidates')">
+      <span class="nav-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+      Candidates
+      <span class="nav-badge">341</span>
+    </div>
+    <div class="nav-item" onclick="showView('jobs')">
+      <span class="nav-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span>
+      Jobs
+      <span class="nav-badge">12</span>
+    </div>
+    <div class="nav-item" onclick="showView('schedule')">
+      <span class="nav-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+      Interview Schedule
+    </div>
+    <div class="nav-item" onclick="showView('connections')">
+      <span class="nav-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
+      Connections
+      <span class="nav-badge">5</span>
+    </div>
+  </div>
+  <div class="nav-grp">
+    <div class="nav-lbl">Account</div>
+    <div class="nav-item" onclick="showView('settings')">
+      <span class="nav-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+      Settings
+    </div>
+    <div class="nav-item" onclick="window.open('docs.html','_blank')">
+      <span class="nav-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+      Docs
+    </div>
+    <div class="nav-item" onclick="window.open('portal.html','_blank')">
+      <span class="nav-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
+      Careers Portal
+    </div>
+  </div>
+  <div class="sidebar-foot">
+    <div class="s-user">
+      <div class="s-av">TD</div>
+      <div><div class="s-name">Tino Dube</div><div class="s-role">Admin</div></div>
+      <span class="s-dots">···</span>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- ═══════════════ DASHBOARD ═══════════════ -->
+<div class="view active" id="view-dashboard">
+  <div class="pg-hd">
+    <div><div class="pg-tag">Overview</div>
+      <h1 class="pg-title">Good morning, <em>Tino.</em></h1>
+      <div class="pg-sub">Monday, 16 March 2026 · 3 interviews today</div>
+    </div>
+    <div class="pg-actions">
+      <button class="btn btn-ghost btn-sm">Export</button>
+      <button class="btn btn-primary btn-sm" onclick="openModal('new-job')">+ New Job</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat"><div class="stat-lbl">Open Roles</div><div class="stat-num">24</div><div class="stat-sub"><span class="up">↑ 3</span> this week</div></div>
+    <div class="stat"><div class="stat-lbl">Active Candidates</div><div class="stat-num">341</div><div class="stat-sub"><span class="up">↑ 18%</span> vs last month</div></div>
+    <div class="stat"><div class="stat-lbl">Interviews Today</div><div class="stat-num">3</div><div class="stat-sub">Next at 10:00 AM</div></div>
+    <div class="stat"><div class="stat-lbl">Avg. Time-to-Hire</div><div class="stat-num">11<span style="font-size:1rem;">d</span></div><div class="stat-sub"><span class="up">↑ 3d faster</span></div></div>
+  </div>
+
+  <div class="two-col">
+    <!-- Pipeline Health -->
+    <div class="card">
+      <div class="card-hd"><span class="card-title">Pipeline Health</span><span class="card-link" onclick="showView('candidates')">View all →</span></div>
+      <div class="pipe-rows">
+        <div class="pipe-row"><div class="pipe-lbl">Applied</div><div class="pipe-track"><div class="pipe-fill" style="width:100%"></div></div><div class="pipe-num">341</div></div>
+        <div class="pipe-row"><div class="pipe-lbl">Screening</div><div class="pipe-track"><div class="pipe-fill" style="width:60%;opacity:.75"></div></div><div class="pipe-num">204</div></div>
+        <div class="pipe-row"><div class="pipe-lbl">Interview</div><div class="pipe-track"><div class="pipe-fill" style="width:32%;opacity:.6"></div></div><div class="pipe-num">108</div></div>
+        <div class="pipe-row"><div class="pipe-lbl">Final Round</div><div class="pipe-track"><div class="pipe-fill" style="width:18%;opacity:.5"></div></div><div class="pipe-num">62</div></div>
+        <div class="pipe-row"><div class="pipe-lbl">Offer</div><div class="pipe-track"><div class="pipe-fill" style="width:8%;background:var(--green)"></div></div><div class="pipe-num">27</div></div>
+      </div>
+    </div>
+    <!-- Speed Matrix -->
+    <div class="card">
+      <div class="card-hd"><span class="card-title">Speed Matrix</span><span style="font-family:var(--mono);font-size:0.6rem;color:var(--g3);">Last 30d</span></div>
+      <div class="mini-chart">
+        <div class="chart-label">Applications per week</div>
+        <div class="chart-row">
+          <div class="lc-axis"></div>
+          <div class="lc-bar" style="height:45%"></div>
+          <div class="lc-bar" style="height:58%"></div>
+          <div class="lc-bar" style="height:52%"></div>
+          <div class="lc-bar" style="height:70%"></div>
+          <div class="lc-bar" style="height:65%"></div>
+          <div class="lc-bar" style="height:80%"></div>
+          <div class="lc-bar" style="height:88%"></div>
+          <div class="lc-bar" style="height:95%;background:var(--blue2);opacity:1"></div>
+        </div>
+        <div class="chart-months"><span class="chart-month">W1</span><span class="chart-month">W2</span><span class="chart-month">W3</span><span class="chart-month">W4</span><span class="chart-month">W5</span><span class="chart-month">W6</span><span class="chart-month">W7</span><span class="chart-month">W8</span></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-top:1px solid var(--bor);">
+        <div style="padding:12px 14px;border-right:1px solid var(--bor);"><div class="stat-lbl">App → Screen</div><div style="font-family:var(--serif);font-size:1.2rem;color:var(--white);">1.2<span style="font-size:0.7rem;">d</span></div></div>
+        <div style="padding:12px 14px;border-right:1px solid var(--bor);"><div class="stat-lbl">Screen → Interview</div><div style="font-family:var(--serif);font-size:1.2rem;color:var(--white);">3.1<span style="font-size:0.7rem;">d</span></div></div>
+        <div style="padding:12px 14px;"><div class="stat-lbl">Interview → Offer</div><div style="font-family:var(--serif);font-size:1.2rem;color:var(--white);">6.7<span style="font-size:0.7rem;">d</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <!-- Candidate Quality Signals -->
+    <div class="card">
+      <div class="card-hd"><span class="card-title">Candidate Quality Signals</span></div>
+      <div class="quality-grid">
+        <div class="qs-item"><div class="qs-label">Avg CV Score</div><div class="qs-val">72</div><div class="qs-sub"><span class="up">↑ 4pts</span> vs last month</div></div>
+        <div class="qs-item"><div class="qs-label">Strong Match (75+)</div><div class="qs-val">89</div><div class="qs-sub">26% of pipeline</div></div>
+        <div class="qs-item"><div class="qs-label">Top Source</div><div class="qs-val" style="font-size:1rem;padding-top:4px;">LinkedIn</div><div class="qs-sub">41% of applicants</div></div>
+        <div class="qs-item"><div class="qs-label">Offer Accept Rate</div><div class="qs-val">92%</div><div class="qs-sub"><span class="up">↑ 4%</span> vs prev</div></div>
+      </div>
+    </div>
+    <!-- Communication Health -->
+    <div class="card">
+      <div class="card-hd"><span class="card-title">Communication Health</span><span class="card-link" onclick="showView('connections')">Open inbox →</span></div>
+      <div class="comm-rows">
+        <div class="comm-row"><div class="comm-left"><div class="comm-dot" style="background:var(--red)"></div><div class="comm-text">Candidates not contacted in 3+ days</div></div><span class="comm-num comm-bad">14</span></div>
+        <div class="comm-row"><div class="comm-left"><div class="comm-dot" style="background:var(--amber)"></div><div class="comm-text">Unread messages in inbox</div></div><span class="comm-num comm-warn">5</span></div>
+        <div class="comm-row"><div class="comm-left"><div class="comm-dot" style="background:var(--amber)"></div><div class="comm-text">Rejection letters unsent</div></div><span class="comm-num comm-warn">8</span></div>
+        <div class="comm-row"><div class="comm-left"><div class="comm-dot" style="background:var(--green)"></div><div class="comm-text">Offers awaiting response</div></div><span class="comm-num comm-ok">3</span></div>
+        <div class="comm-row"><div class="comm-left"><div class="comm-dot" style="background:var(--green)"></div><div class="comm-text">Scorecards submitted this week</div></div><span class="comm-num comm-ok">24</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Activity -->
+  <div class="card">
+    <div class="card-hd"><span class="card-title">Recent Activity</span><span class="card-link">View all →</span></div>
+    <div class="act-list">
+      <div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-body"><div class="act-text"><strong>Amara Dube</strong> accepted the offer for <strong>Senior Designer</strong></div><div class="act-time">2 min ago</div></div></div>
+      <div class="act-item"><div class="act-dot" style="background:var(--blue2)"></div><div class="act-body"><div class="act-text"><strong>Marcus Khumalo</strong> moved to <strong>Final Interview</strong></div><div class="act-time">18 min ago</div></div></div>
+      <div class="act-item"><div class="act-dot" style="background:var(--amber)"></div><div class="act-body"><div class="act-text">Scorecard submitted for <strong>Priya Nair</strong> — CV Score 4.2/5</div><div class="act-time">1 hr ago</div></div></div>
+      <div class="act-item"><div class="act-dot" style="background:var(--blue2)"></div><div class="act-body"><div class="act-text"><strong>12 new applications</strong> for <strong>Backend Engineer</strong></div><div class="act-time">2 hr ago</div></div></div>
+      <div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-body"><div class="act-text"><strong>Lena Müller</strong> booked her interview for tomorrow at 10am</div><div class="act-time">3 hr ago</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ CANDIDATES ═══════════════ -->
+<div class="view" id="view-candidates">
+  <div class="pg-hd">
+    <div><div class="pg-tag">All Roles</div><h1 class="pg-title">Candidates</h1><div class="pg-sub">341 total · 27 in offer stage</div></div>
+    <div class="pg-actions">
+      <button class="btn btn-ghost btn-sm">Export CSV</button>
+      <button class="btn btn-primary btn-sm" onclick="openModal('add-cand')">+ Add Candidate</button>
+    </div>
+  </div>
+  <div class="filters">
+    <div class="filter active" onclick="filterCands('all',this)">All <span style="font-family:var(--mono);font-size:0.6rem;margin-left:3px;opacity:.6">341</span></div>
+    <div class="filter" onclick="filterCands('Applied',this)">Applied</div>
+    <div class="filter" onclick="filterCands('Screening',this)">Screening</div>
+    <div class="filter" onclick="filterCands('Interview',this)">Interview</div>
+    <div class="filter" onclick="filterCands('Final',this)">Final Round</div>
+    <div class="filter" onclick="filterCands('Offer',this)">Offer</div>
+  </div>
+  <div class="card">
+    <div style="display:grid;grid-template-columns:32px 1fr 110px 150px 80px 80px;gap:12px;padding:8px 16px;border-bottom:1px solid var(--bor2);">
+      <div></div>
+      <div style="font-family:var(--mono);font-size:0.58rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--g3);">Name</div>
+      <div style="font-family:var(--mono);font-size:0.58rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--g3);">Stage</div>
+      <div style="font-family:var(--mono);font-size:0.58rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--g3);">Role</div>
+      <div style="font-family:var(--mono);font-size:0.58rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--g3);">CV Score</div>
+      <div style="font-family:var(--mono);font-size:0.58rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--g3);">Applied</div>
+    </div>
+    <div id="cand-list">
+      <div class="cand-row" data-stage="Final" onclick="showProfile('Lena Müller','Product Designer','Final Round',88)">
+        <div class="cand-av">LM</div>
+        <div class="cand-info"><div class="cand-name">Lena Müller</div><div class="cand-role">lena@email.com</div></div>
+        <div style="min-width:110px;"><span class="pill pill-open"><span class="pill-dot"></span>Final Round</span></div>
+        <div style="font-size:0.8rem;color:var(--g2);min-width:150px;">Product Designer</div>
+        <div class="score-pips" style="min-width:80px;">
+          <div class="pip" style="background:var(--green)"></div><div class="pip" style="background:var(--green)"></div><div class="pip" style="background:var(--green)"></div><div class="pip" style="background:var(--green)"></div><div class="pip" style="background:var(--bor2)"></div>
+        </div>
+        <div style="font-family:var(--mono);font-size:0.62rem;color:var(--g3);">Mar 2</div>
+      </div>
+      <div class="cand-row" data-stage="Offer" onclick="showProfile('Amara Dube','Product Designer','Offer Sent',94)">
+        <div class="cand-av">AD</div>
+        <div class="cand-info"><div class="cand-name">Amara Dube</div><div class="cand-role">amara@email.com</div></div>
+        <div style="min-width:110px;"><span class="pill pill-open" style="color:var(--green)"><span class="pill-dot"></span>Offer Sent</span></div>
+        <div style="font-size:0.8rem;color:var(--g2);min-width:150px;">Product Designer</div>
+        <div class="score-pips" style="min-width:80px;">
+          <div class="pip" style="background:var(--green)"></div><div class="pip" style="background:var(--green)"></div><div class="pip" style="background:var(--green)"></div><div class="pip" style="background:var(--green)"></div><div class="pip" style="background:var(--green)"></div>
+        </div>
+        <div style="font-family:var(--mono);font-size:0.62rem;color:var(--g3);">Feb 28</div>
+      </div>
+      <div class="cand-row" data-stage="Screening" onclick="showProfile('Marcus Khumalo','Backend Engineer','Screening',72)">
+        <div class="cand-av">MK</div>
+        <div class="cand-info"><div class="cand-name">Marcus Khumalo</div><div class="cand-role">marcus@email.com</div></div>
+        <div style="min-width:110px;"><span class="pill pill-draft"><span class="pill-dot"></span>Screening</span></div>
+        <div style="font-size:0.8rem;color:var(--g2);min-width:150px;">Backend Engineer</div>
+        <div class="score-pips" style="min-width:80px;">
+          <div class="pip" style="background:var(--green)"></div><div class="pip" style="background:var(--green)"></div><div class="pip" style="background:var(--green)"></div><div class="pip" style="background:var(--amber)"></div><div class="pip" style="background:var(--bor2)"></div>
+        </div>
+        <div style="font-family:var(--mono);font-size:0.62rem;color:var(--g3);">Feb 24</div>
+      </div>
+      <div class="cand-row" data-stage="Interview" onclick="showProfile('Priya Nair','Head of Marketing','Interview',81)">
+        <div class="cand-av">PN</div>
+        <div class="cand-info"><div class="cand-name">Priya Nair</div><div class="cand-role">priya@email.com</div></div>
+        <div style="min-width:110px;"><span class="pill pill-blue"><span class="pill-dot"></span>Interview</span></div>
+        <div style="font-size:0.8rem;color:var(--g2);min-width:150px;">Head of Marketing</div>
+        <div class="score-pips" style="min-width:80px;">
+          <div class="pip" style="background:var(--green)"></div><div class="pip" style="background:var(--green)"></div><div class="pip" style="background:var(--green)"></div><div class="pip" style="background:var(--green)"></div><div class="pip" style="background:var(--bor2)"></div>
+        </div>
+        <div style="font-family:var(--mono);font-size:0.62rem;color:var(--g3);">Feb 18</div>
+      </div>
+      <div class="cand-row" data-stage="Applied" onclick="showProfile('Zanele Moyo','Product Designer','Applied',65)">
+        <div class="cand-av">ZM</div>
+        <div class="cand-info"><div class="cand-name">Zanele Moyo</div><div class="cand-role">zanele@email.com</div></div>
+        <div style="min-width:110px;"><span class="pill pill-closed"><span class="pill-dot"></span>Applied</span></div>
+        <div style="font-size:0.8rem;color:var(--g2);min-width:150px;">Product Designer</div>
+        <div class="score-pips" style="min-width:80px;">
+          <div class="pip" style="background:var(--green)"></div><div class="pip" style="background:var(--green)"></div><div class="pip" style="background:var(--amber)"></div><div class="pip" style="background:var(--bor2)"></div><div class="pip" style="background:var(--bor2)"></div>
+        </div>
+        <div style="font-family:var(--mono);font-size:0.62rem;color:var(--g3);">Mar 14</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ CANDIDATE PROFILE ═══════════════ -->
+<div class="view" id="view-profile">
+  <div class="pg-hd">
+    <div>
+      <div class="pg-tag" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;" onclick="showView('candidates')">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Back to Candidates
+      </div>
+      <h1 class="pg-title" id="prof-name-title">Lena <em>Müller</em></h1>
+      <div class="pg-sub" id="prof-role-sub">Applying for: Product Designer</div>
+    </div>
+    <div class="pg-actions">
+      <button class="btn btn-ghost btn-sm" onclick="showView('connections')">Send Email</button>
+      <button class="btn btn-ghost btn-sm" style="color:var(--red);border-color:rgba(248,113,113,0.3);">Reject</button>
+      <button class="btn btn-primary btn-sm">Move Stage →</button>
+    </div>
+  </div>
+  <div class="profile-layout">
+    <!-- LEFT COLUMN -->
+    <div class="profile-left">
+      <!-- Profile card -->
+      <div class="profile-card">
+        <div class="profile-avatar" id="prof-av">L</div>
+        <div class="profile-name" id="prof-fullname">Lena Müller</div>
+        <div class="profile-role" id="prof-role-tag">Product Designer</div>
+        <div class="profile-stage">
+          <span id="prof-stage-label">Current stage</span>
+          <span id="prof-stage-val" class="pill pill-open"><span class="pill-dot"></span>Final Round</span>
+        </div>
+        <div class="profile-quick">
+          <button class="btn btn-ghost btn-sm">Email</button>
+          <button class="btn btn-ghost btn-sm">Schedule</button>
+          <button class="btn btn-primary btn-sm">Advance →</button>
+        </div>
+      </div>
+
+      <!-- CV Match Score -->
+      <div class="cv-match">
+        <div class="card-hd" style="border-bottom:none;padding-bottom:0;"><span class="card-title">CV Match Breakdown</span></div>
+        <div class="cv-match-top">
+          <div class="cv-score-ring">
+            <svg viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r="32" fill="none" stroke="var(--bor2)" stroke-width="8"/>
+              <circle cx="40" cy="40" r="32" fill="none" stroke="var(--green)" stroke-width="8" stroke-dasharray="201" id="prof-ring" stroke-dashoffset="50" stroke-linecap="round"/>
+            </svg>
+            <div class="cv-ring-num"><span class="cv-big-num" id="prof-score">88</span><span class="cv-denom">/100</span></div>
+          </div>
+          <div>
+            <div style="font-size:0.88rem;font-weight:600;color:var(--g1);margin-bottom:4px;">Strong Match</div>
+            <div style="font-size:0.78rem;font-weight:300;color:var(--g2);line-height:1.6;">Exceeds requirements on 4 of 5 dimensions. Excellent design systems background.</div>
+            <span class="cv-verdict pill pill-open" style="margin-top:8px;">Strong Match</span>
+          </div>
+        </div>
+        <div class="cv-dims">
+          <div class="cv-dim-row"><div class="cv-dim-name">Technical Skills</div><div class="cv-dim-track"><div class="cv-dim-fill" style="width:92%;background:var(--green)"></div></div><div class="cv-dim-score">92</div></div>
+          <div class="cv-dim-row"><div class="cv-dim-name">Experience Level</div><div class="cv-dim-track"><div class="cv-dim-fill" style="width:85%;background:var(--green)"></div></div><div class="cv-dim-score">85</div></div>
+          <div class="cv-dim-row"><div class="cv-dim-name">Role Relevance</div><div class="cv-dim-track"><div class="cv-dim-fill" style="width:90%;background:var(--green)"></div></div><div class="cv-dim-score">90</div></div>
+          <div class="cv-dim-row"><div class="cv-dim-name">Career Trajectory</div><div class="cv-dim-track"><div class="cv-dim-fill" style="width:78%;background:var(--blue2)"></div></div><div class="cv-dim-score">78</div></div>
+        </div>
+      </div>
+
+      <!-- Contact Details -->
+      <div class="card">
+        <div class="card-hd"><span class="card-title">Contact Details</span></div>
+        <div style="padding:14px 16px;">
+          <div class="contact-rows">
+            <div class="contact-row"><svg class="contact-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> lena.muller@email.com</div>
+            <div class="contact-row"><svg class="contact-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 14a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.56 3h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg> +49 171 234 5678</div>
+            <div class="contact-row"><svg class="contact-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> Berlin, Germany</div>
+            <div class="contact-row"><svg class="contact-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg> linkedin.com/in/lenamuller</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <!-- Skills -->
+      <div class="card">
+        <div class="card-hd"><span class="card-title">Skill Assessment</span></div>
+        <div class="skills-wrap">
+          <div class="skill-legend">
+            <div class="sl-item"><div class="sl-dot" style="background:var(--green)"></div><span style="font-size:0.72rem;color:var(--g2);">Matched</span></div>
+            <div class="sl-item"><div class="sl-dot" style="background:var(--amber)"></div><span style="font-size:0.72rem;color:var(--g2);">Partial</span></div>
+            <div class="sl-item"><div class="sl-dot" style="background:var(--bor2)"></div><span style="font-size:0.72rem;color:var(--g2);">Not found</span></div>
+          </div>
+          <div class="skill-cloud">
+            <span class="skill-tag skill-match">Figma</span>
+            <span class="skill-tag skill-match">Design Systems</span>
+            <span class="skill-tag skill-match">Prototyping</span>
+            <span class="skill-tag skill-match">User Research</span>
+            <span class="skill-tag skill-match">iOS Design</span>
+            <span class="skill-tag skill-partial">Motion Design</span>
+            <span class="skill-tag skill-partial">Accessibility</span>
+            <span class="skill-tag skill-miss">Brand Strategy</span>
+            <span class="skill-tag skill-miss">Video Production</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Education -->
+      <div class="card">
+        <div class="card-hd"><span class="card-title">Education</span></div>
+        <div style="padding:14px 18px;">
+          <div class="edu-item">
+            <div class="edu-dot"></div>
+            <div><div class="edu-degree">M.A. Communication Design</div><div class="edu-meta">Hochschule für Gestaltung, Offenbach · 2016 – 2018</div></div>
+          </div>
+          <div class="edu-item">
+            <div class="edu-dot" style="background:var(--bor2)"></div>
+            <div><div class="edu-degree">B.A. Graphic Design</div><div class="edu-meta">Universität der Künste Berlin · 2012 – 2016</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Experience -->
+      <div class="card">
+        <div class="card-hd"><span class="card-title">Experience <span style="font-family:var(--mono);font-size:0.6rem;color:var(--g3);font-weight:400;margin-left:6px;">Extracted from CV</span></span></div>
+        <div style="padding:14px 18px;">
+          <div class="exp-item">
+            <div class="exp-line"><div class="exp-dot"></div><div class="exp-connector"></div></div>
+            <div>
+              <div class="exp-title">Senior Product Designer <span class="ai-flag">AI verified</span></div>
+              <div class="exp-company">N26 · Berlin</div>
+              <div class="exp-dates">Jan 2021 – Present · 3 yrs 2 mos</div>
+              <div class="exp-desc">Led design of the mobile banking interface serving 8M users. Owned the design system (280+ components). Reduced support tickets by 34% through UX improvements.</div>
+            </div>
+          </div>
+          <div class="exp-item">
+            <div class="exp-line"><div class="exp-dot" style="background:var(--bor2)"></div><div class="exp-connector"></div></div>
+            <div>
+              <div class="exp-title">Product Designer</div>
+              <div class="exp-company">Zalando · Berlin</div>
+              <div class="exp-dates">Jun 2018 – Dec 2020 · 2 yrs 6 mos</div>
+              <div class="exp-desc">Designed checkout and returns flows. Ran weekly user testing sessions. Collaborated cross-functionally with 4 engineering squads.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Interview Guide -->
+      <div class="card" style="border-color:rgba(58,98,200,0.3);background:var(--blue-dim);">
+        <div class="card-hd" style="border-bottom-color:rgba(58,98,200,0.2);"><span class="card-title" style="color:var(--blue2);">AI Interview Guide — Generated from CV</span><span class="card-link">Customise</span></div>
+        <div style="padding:14px 18px;display:flex;flex-direction:column;gap:10px;">
+          <div style="padding:10px 14px;background:var(--bg3);border:1px solid var(--bor2);border-radius:8px;">
+            <div style="font-family:var(--mono);font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--blue2);margin-bottom:5px;">Verify Claim</div>
+            <div style="font-size:0.82rem;color:var(--g1);">You mention leading a design system with 280+ components at N26 — walk us through how you approached governance and kept it maintained as the team scaled.</div>
+          </div>
+          <div style="padding:10px 14px;background:var(--bg3);border:1px solid var(--bor2);border-radius:8px;">
+            <div style="font-family:var(--mono);font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--blue2);margin-bottom:5px;">Explore Gap</div>
+            <div style="font-size:0.82rem;color:var(--g1);">Your CV doesn't show brand strategy work — is that something you've done informally, or is it outside your focus area?</div>
+          </div>
+          <div style="padding:10px 14px;background:var(--bg3);border:1px solid var(--bor2);border-radius:8px;">
+            <div style="font-family:var(--mono);font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--amber);margin-bottom:5px;">Career Trajectory</div>
+            <div style="font-size:0.82rem;color:var(--g1);">You've spent 5+ years in Berlin fintech. What draws you to this role specifically — and what does the next 3 years look like for you?</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ JOBS ═══════════════ -->
+<div class="view" id="view-jobs">
+  <div class="pg-hd">
+    <div><div class="pg-tag">Hiring</div><h1 class="pg-title">Jobs</h1><div class="pg-sub">12 active roles · 5 departments</div></div>
+    <div class="pg-actions">
+      <button class="btn btn-ghost btn-sm">Filter</button>
+      <button class="btn btn-primary btn-sm" onclick="openModal('new-job')">+ Post a Job</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>Job Title</th><th>Department</th><th>Location</th><th>Date Created</th><th>Status</th><th>Applicants</th><th>Roles Applied</th><th></th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="td-strong">Senior Product Designer</td>
+            <td><span class="dept-tag">Design</span></td>
+            <td style="color:var(--g3);">Remote</td>
+            <td style="font-family:var(--mono);font-size:0.72rem;color:var(--g3);">Mar 2, 2026</td>
+            <td><span class="pill pill-open"><span class="pill-dot"></span>Open</span></td>
+            <td style="font-family:var(--mono);font-size:0.78rem;">48</td>
+            <td style="font-family:var(--mono);font-size:0.72rem;color:var(--g2);">48 applied</td>
+            <td><button class="btn btn-ghost btn-sm" onclick="showView('candidates')">View →</button></td>
+          </tr>
+          <tr>
+            <td class="td-strong">Backend Engineer — Node.js</td>
+            <td><span class="dept-tag">Engineering</span></td>
+            <td style="color:var(--g3);">Hybrid · London</td>
+            <td style="font-family:var(--mono);font-size:0.72rem;color:var(--g3);">Feb 22, 2026</td>
+            <td><span class="pill pill-open"><span class="pill-dot"></span>Open</span></td>
+            <td style="font-family:var(--mono);font-size:0.78rem;">71</td>
+            <td style="font-family:var(--mono);font-size:0.72rem;color:var(--g2);">71 applied</td>
+            <td><button class="btn btn-ghost btn-sm">View →</button></td>
+          </tr>
+          <tr>
+            <td class="td-strong">Head of Marketing</td>
+            <td><span class="dept-tag">Marketing</span></td>
+            <td style="color:var(--g3);">On-site · NYC</td>
+            <td style="font-family:var(--mono);font-size:0.72rem;color:var(--g3);">Feb 18, 2026</td>
+            <td><span class="pill pill-open"><span class="pill-dot"></span>Open</span></td>
+            <td style="font-family:var(--mono);font-size:0.78rem;">34</td>
+            <td style="font-family:var(--mono);font-size:0.72rem;color:var(--g2);">34 applied</td>
+            <td><button class="btn btn-ghost btn-sm">View →</button></td>
+          </tr>
+          <tr>
+            <td class="td-strong">Data Analyst</td>
+            <td><span class="dept-tag">Data</span></td>
+            <td style="color:var(--g3);">Remote</td>
+            <td style="font-family:var(--mono);font-size:0.72rem;color:var(--g3);">Feb 14, 2026</td>
+            <td><span class="pill pill-open"><span class="pill-dot"></span>Open</span></td>
+            <td style="font-family:var(--mono);font-size:0.78rem;">56</td>
+            <td style="font-family:var(--mono);font-size:0.72rem;color:var(--g2);">56 applied</td>
+            <td><button class="btn btn-ghost btn-sm">View →</button></td>
+          </tr>
+          <tr>
+            <td class="td-strong">Customer Success Manager</td>
+            <td><span class="dept-tag">CS</span></td>
+            <td style="color:var(--g3);">Hybrid · Berlin</td>
+            <td style="font-family:var(--mono);font-size:0.72rem;color:var(--g3);">Mar 10, 2026</td>
+            <td><span class="pill pill-draft"><span class="pill-dot"></span>Draft</span></td>
+            <td style="font-family:var(--mono);font-size:0.78rem;">—</td>
+            <td style="font-family:var(--mono);font-size:0.72rem;color:var(--g3);">Not published</td>
+            <td><button class="btn btn-primary btn-sm">Publish</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ INTERVIEW SCHEDULE ═══════════════ -->
+<div class="view" id="view-schedule">
+  <div class="pg-hd">
+    <div><div class="pg-tag">Schedule</div><h1 class="pg-title">Interview <em>Schedule</em></h1><div class="pg-sub">Week of March 16, 2026</div></div>
+    <div class="pg-actions">
+      <button class="btn btn-ghost btn-sm">Availability Settings</button>
+      <button class="btn btn-primary btn-sm" onclick="openModal('schedule-interview')">+ Schedule</button>
+    </div>
+  </div>
+
+  <div class="schedule-layout">
+    <!-- Availability Panel -->
+    <div>
+      <div class="avail-card">
+        <div>
+          <div style="font-family:var(--mono);font-size:0.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--g3);margin-bottom:10px;">My Availability</div>
+          <div class="day-toggle-row">
+            <div class="day-btn on">M</div>
+            <div class="day-btn on">T</div>
+            <div class="day-btn on">W</div>
+            <div class="day-btn on">T</div>
+            <div class="day-btn on">F</div>
+            <div class="day-btn">S</div>
+            <div class="day-btn">S</div>
+          </div>
+        </div>
+        <div class="avail-row"><span class="avail-label">Interview hours</span><span class="avail-val">09:00 – 17:00</span></div>
+        <div class="avail-row"><span class="avail-label">Buffer time</span><span class="avail-val">15 min</span></div>
+        <div class="avail-row"><span class="avail-label">Max per day</span><span class="avail-val">5 interviews</span></div>
+        <div class="avail-row"><span class="avail-label">Timezone</span><span class="avail-val">UTC+2 Harare</span></div>
+        <div class="avail-row"><span class="avail-label">Video platform</span><span class="avail-val">Google Meet</span></div>
+      </div>
+
+      <div style="margin-top:14px;">
+        <div class="card">
+          <div class="card-hd"><span class="card-title">Today — Mar 16</span></div>
+          <div style="padding:8px 0;">
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--bor);cursor:pointer;" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+              <div style="font-family:var(--mono);font-size:0.68rem;color:var(--g3);min-width:44px;">10:00</div>
+              <div style="width:3px;height:30px;border-radius:2px;background:#2448a5;flex-shrink:0;"></div>
+              <div><div style="font-size:0.8rem;font-weight:600;color:var(--g1);">Lena Müller</div><div style="font-size:0.7rem;color:var(--g3);">Final Round · 60 min</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--bor);cursor:pointer;" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+              <div style="font-family:var(--mono);font-size:0.68rem;color:var(--g3);min-width:44px;">14:30</div>
+              <div style="width:3px;height:30px;border-radius:2px;background:#1a3a2a;flex-shrink:0;"></div>
+              <div><div style="font-size:0.8rem;font-weight:600;color:var(--g1);">Kwame Osei</div><div style="font-size:0.7rem;color:var(--g3);">Technical · 90 min</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+              <div style="font-family:var(--mono);font-size:0.68rem;color:var(--g3);min-width:44px;">16:00</div>
+              <div style="width:3px;height:30px;border-radius:2px;background:#1a3a5a;flex-shrink:0;"></div>
+              <div><div style="font-size:0.8rem;font-weight:600;color:var(--g1);">Priya Nair</div><div style="font-size:0.7rem;color:var(--g3);">Screening · 30 min</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Week Calendar -->
+    <div>
+      <div class="cal-nav">
+        <span class="cal-month">March 2026</span>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div class="cal-nav-btns">
+            <div class="cal-nav-btn">‹</div>
+            <div class="cal-nav-btn">›</div>
+          </div>
+          <div class="filter active" style="padding:4px 12px;">Week</div>
+          <div class="filter" style="padding:4px 12px;">Day</div>
+          <div class="filter" style="padding:4px 12px;">Month</div>
+        </div>
+      </div>
+      <div class="week-grid">
+        <div class="wg-header wg-time"></div>
+        <div class="wg-header">Mon 16</div>
+        <div class="wg-header">Tue 17</div>
+        <div class="wg-header">Wed 18</div>
+        <div class="wg-header">Thu 19</div>
+        <div class="wg-header">Fri 20</div>
+        <!-- Time slots -->
+        <div class="wg-time">
+          <div class="wg-time-slot">9:00</div>
+          <div class="wg-time-slot">10:00</div>
+          <div class="wg-time-slot">11:00</div>
+          <div class="wg-time-slot">12:00</div>
+          <div class="wg-time-slot">13:00</div>
+          <div class="wg-time-slot">14:00</div>
+          <div class="wg-time-slot">15:00</div>
+          <div class="wg-time-slot">16:00</div>
+        </div>
+        <!-- Mon -->
+        <div class="wg-col">
+          <div class="wg-slot"></div>
+          <div class="wg-slot" style="position:relative;">
+            <div class="interview-block ib-final" style="top:4px;height:44px;">
+              <div class="ib-name">Lena Müller</div><div class="ib-role">Final Round</div>
+            </div>
+          </div>
+          <div class="wg-slot"></div><div class="wg-slot"></div><div class="wg-slot"></div>
+          <div class="wg-slot" style="position:relative;">
+            <div class="interview-block ib-tech" style="top:32px;height:44px;">
+              <div class="ib-name">Kwame Osei</div><div class="ib-role">Technical</div>
+            </div>
+          </div>
+          <div class="wg-slot"></div>
+          <div class="wg-slot" style="position:relative;">
+            <div class="interview-block ib-screen" style="top:4px;height:28px;">
+              <div class="ib-name">Priya Nair</div><div class="ib-role">Screening</div>
+            </div>
+          </div>
+        </div>
+        <!-- Tue -->
+        <div class="wg-col">
+          <div class="wg-slot"></div>
+          <div class="wg-slot" style="position:relative;">
+            <div class="interview-block ib-screen" style="top:4px;height:28px;">
+              <div class="ib-name">Sofia Reyes</div><div class="ib-role">Screening</div>
+            </div>
+          </div>
+          <div class="wg-slot"></div><div class="wg-slot"></div><div class="wg-slot"></div><div class="wg-slot"></div><div class="wg-slot"></div><div class="wg-slot"></div>
+        </div>
+        <!-- Wed -->
+        <div class="wg-col">
+          <div class="wg-slot"></div><div class="wg-slot"></div><div class="wg-slot"></div><div class="wg-slot"></div>
+          <div class="wg-slot" style="position:relative;">
+            <div class="interview-block ib-final" style="top:4px;height:44px;">
+              <div class="ib-name">Ahmed Hassan</div><div class="ib-role">Final Round</div>
+            </div>
+          </div>
+          <div class="wg-slot"></div><div class="wg-slot"></div><div class="wg-slot"></div>
+        </div>
+        <!-- Thu / Fri -->
+        <div class="wg-col"><div class="wg-slot" style="height:416px;"></div></div>
+        <div class="wg-col"><div class="wg-slot" style="height:416px;"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ CONNECTIONS ═══════════════ -->
+<div class="view" id="view-connections">
+  <div class="pg-hd">
+    <div><div class="pg-tag">Communication</div><h1 class="pg-title">Connections</h1><div class="pg-sub">All candidate emails · 5 unread</div></div>
+    <div class="pg-actions">
+      <button class="btn btn-primary btn-sm">+ Compose</button>
+    </div>
+  </div>
+  <div class="conn-layout">
+    <div class="conn-list">
+      <div class="conn-list-hd">Inbox <span style="font-family:var(--mono);font-size:0.62rem;color:var(--g3);">5 unread</span></div>
+      <div class="conn-item active">
+        <span class="ci-time">10:24</span>
+        <div class="ci-name"><span class="unread-dot"></span>Lena Müller</div>
+        <div class="ci-subject">Re: Final round scheduling</div>
+        <div class="ci-preview">Hi Tino, I'm available tomorrow at 10am...</div>
+      </div>
+      <div class="conn-item">
+        <span class="ci-time">9:51</span>
+        <div class="ci-name"><span class="unread-dot"></span>Kwame Osei</div>
+        <div class="ci-subject">Technical assessment question</div>
+        <div class="ci-preview">Just wanted to clarify one thing...</div>
+      </div>
+      <div class="conn-item">
+        <span class="ci-time">Yesterday</span>
+        <div class="ci-name">Amara Dube</div>
+        <div class="ci-subject">Offer letter — thank you!</div>
+        <div class="ci-preview">Hi, I'm so excited about this...</div>
+      </div>
+      <div class="conn-item">
+        <span class="ci-time">Yesterday</span>
+        <div class="ci-name"><span class="unread-dot"></span>Priya Nair</div>
+        <div class="ci-subject">Interview feedback request</div>
+        <div class="ci-preview">Any update on my interview?</div>
+      </div>
+      <div class="conn-item">
+        <span class="ci-time">Mar 14</span>
+        <div class="ci-name"><span class="unread-dot"></span>Marcus Khumalo</div>
+        <div class="ci-subject">Portfolio link updated</div>
+        <div class="ci-preview">Here's the updated portfolio link...</div>
+      </div>
+    </div>
+
+    <div class="email-pane">
+      <div class="email-top">
+        <div class="email-subject">Re: Final round scheduling</div>
+        <div class="email-from">
+          <div class="email-av">LM</div>
+          <div><div class="email-sender-name">Lena Müller</div><div class="email-addr">lena.muller@email.com</div></div>
+          <div class="email-time">Today at 10:24 AM</div>
+        </div>
+      </div>
+      <div class="email-body-wrap">
+        <p>Hi Tino,</p>
+        <p>Thanks for reaching out about the final round. I'm really looking forward to it — the conversations with the team so far have been great.</p>
+        <p>I'm available tomorrow from 9am–12pm or after 3pm. Wednesday works most of the day too. Would any of those slots work for the panel?</p>
+        <p>Also — is this a 60-minute session or should I plan for longer? I want to make sure I have time to walk through the design case study properly.</p>
+        <p>— Lena</p>
+      </div>
+      <div class="email-compose">
+        <div class="compose-toolbar">
+          <span style="font-family:var(--mono);font-size:0.6rem;color:var(--g3);letter-spacing:1px;">TEMPLATE:</span>
+          <div class="compose-type active">Reply</div>
+          <div class="compose-type" onclick="setEmailType('Offer Letter',this)">Offer Letter</div>
+          <div class="compose-type" onclick="setEmailType('Rejection',this)">Rejection</div>
+          <div class="compose-type" onclick="setEmailType('Interview Invite',this)">Interview Invite</div>
+        </div>
+        <textarea class="compose-input" id="compose-area" placeholder="Reply to Lena..."></textarea>
+        <div class="compose-footer">
+          <span style="font-family:var(--mono);font-size:0.62rem;color:var(--g3);">Sending as: tino@hireflow.io</span>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm">Save draft</button>
+            <button class="btn btn-primary btn-sm">Send →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ SETTINGS ═══════════════ -->
+<div class="view" id="view-settings">
+  <div class="pg-hd">
+    <div><div class="pg-tag">Configuration</div><h1 class="pg-title">Settings</h1></div>
+  </div>
+  <div class="settings-layout">
+    <div class="settings-nav">
+      <div class="settings-nav-item active" onclick="settingsTab(this)">General</div>
+      <div class="settings-nav-item" onclick="settingsTab(this)">Account</div>
+      <div class="settings-nav-item" onclick="settingsTab(this)">Notifications</div>
+      <div class="settings-nav-item" onclick="settingsTab(this)">Team</div>
+      <div class="settings-nav-item" onclick="settingsTab(this)">Integrations</div>
+      <div class="settings-nav-item" onclick="settingsTab(this)">Billing</div>
+      <div class="settings-nav-item" onclick="settingsTab(this)">API Keys</div>
+    </div>
+    <div>
+      <div class="settings-section">
+        <div class="settings-sec-hd">Appearance</div>
+        <div class="settings-row">
+          <div><div class="sr-label">Theme</div><div class="sr-sub">Switch between dark and light mode</div></div>
+          <div style="display:flex;gap:8px;">
+            <div class="compose-type active" onclick="setTheme('dark',this)">Dark</div>
+            <div class="compose-type" onclick="setTheme('light',this)">Light</div>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div><div class="sr-label">Language</div><div class="sr-sub">Interface language</div></div>
+          <select class="settings-select"><option>English</option><option>French</option><option>Portuguese</option></select>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-sec-hd">Account Settings</div>
+        <div class="settings-row">
+          <div><div class="sr-label">Full Name</div><div class="sr-sub">Your display name</div></div>
+          <input class="settings-input" value="Tino Dube"/>
+        </div>
+        <div class="settings-row">
+          <div><div class="sr-label">Email Address</div><div class="sr-sub">Your login email</div></div>
+          <input class="settings-input" value="tino@hireflow.io"/>
+        </div>
+        <div class="settings-row">
+          <div><div class="sr-label">Password</div><div class="sr-sub">Last changed 30 days ago</div></div>
+          <button class="btn btn-ghost btn-sm">Change password</button>
+        </div>
+        <div class="settings-row">
+          <div><div class="sr-label">Timezone</div><div class="sr-sub">Used for interview scheduling</div></div>
+          <select class="settings-select"><option>UTC+2 — Harare</option><option>UTC+0 — London</option><option>UTC-5 — New York</option></select>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-sec-hd">Notifications</div>
+        <div class="settings-row">
+          <div><div class="sr-label">New Applications</div><div class="sr-sub">Alert when someone applies</div></div>
+          <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+        </div>
+        <div class="settings-row">
+          <div><div class="sr-label">Stage Changes</div><div class="sr-sub">When a candidate moves stage</div></div>
+          <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+        </div>
+        <div class="settings-row">
+          <div><div class="sr-label">Interview Reminders</div><div class="sr-sub">1 hour before each interview</div></div>
+          <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+        </div>
+        <div class="settings-row">
+          <div><div class="sr-label">Scorecard Submitted</div><div class="sr-sub">When feedback is added</div></div>
+          <button class="toggle" onclick="this.classList.toggle('on')"></button>
+        </div>
+        <div class="settings-row">
+          <div><div class="sr-label">Offer Accepted</div><div class="sr-sub">When a candidate says yes</div></div>
+          <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-sec-hd" style="color:var(--red);">Danger Zone</div>
+        <div class="settings-row">
+          <div><div class="sr-label" style="color:var(--red);">Delete Workspace</div><div class="sr-sub">Permanently delete all data. Cannot be undone.</div></div>
+          <button class="btn btn-danger btn-sm">Delete workspace</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<!-- MODALS -->
+<div class="modal-back" id="modal-new-job">
+  <div class="modal">
+    <div class="modal-hd"><span class="modal-title">Post a new Job</span><button class="modal-x" onclick="closeModal('new-job')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-field"><label class="form-label">Job Title *</label><input class="form-input" placeholder="e.g. Senior Product Designer"/></div>
+        <div class="form-field"><label class="form-label">Department</label><select class="form-select"><option>Design</option><option>Engineering</option><option>Marketing</option><option>Data</option><option>Finance</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-field"><label class="form-label">Location</label><input class="form-input" placeholder="Remote / Hybrid / On-site"/></div>
+        <div class="form-field"><label class="form-label">Date</label><input class="form-input" type="date"/></div>
+      </div>
+      <div class="form-field"><label class="form-label">Salary Range</label><input class="form-input" placeholder="e.g. $80k – $110k (optional)"/></div>
+      <div class="form-field"><label class="form-label">Job Description</label><textarea class="form-input" rows="4" placeholder="Describe the role..."></textarea></div>
+      <div class="form-field"><label class="form-label">Required Skills (for CV analysis)</label><input class="form-input" placeholder="e.g. Figma, Design Systems, Prototyping"/></div>
+      <div class="form-row">
+        <div class="form-field"><label class="form-label">Status</label><select class="form-select"><option>Open</option><option>Draft</option></select></div>
+        <div class="form-field"><label class="form-label">Employment Type</label><select class="form-select"><option>Full-time</option><option>Part-time</option><option>Contract</option></select></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('new-job')">Cancel</button>
+      <button class="btn btn-primary">Post Job →</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-back" id="modal-add-cand">
+  <div class="modal">
+    <div class="modal-hd"><span class="modal-title">Add Candidate</span><button class="modal-x" onclick="closeModal('add-cand')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-field"><label class="form-label">First Name</label><input class="form-input" placeholder="First name"/></div>
+        <div class="form-field"><label class="form-label">Last Name</label><input class="form-input" placeholder="Last name"/></div>
+      </div>
+      <div class="form-field"><label class="form-label">Email</label><input class="form-input" type="email" placeholder="candidate@email.com"/></div>
+      <div class="form-row">
+        <div class="form-field"><label class="form-label">Apply to Role</label><select class="form-select"><option>Senior Product Designer</option><option>Backend Engineer</option><option>Head of Marketing</option><option>Data Analyst</option></select></div>
+        <div class="form-field"><label class="form-label">Initial Stage</label><select class="form-select"><option>Applied</option><option>Screening</option><option>Interview</option></select></div>
+      </div>
+      <div class="form-field"><label class="form-label">CV / Notes</label><textarea class="form-input" rows="3" placeholder="Paste LinkedIn, portfolio or notes..."></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('add-cand')">Cancel</button>
+      <button class="btn btn-primary">Add Candidate →</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-back" id="modal-schedule-interview">
+  <div class="modal">
+    <div class="modal-hd"><span class="modal-title">Schedule Interview</span><button class="modal-x" onclick="closeModal('schedule-interview')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-field"><label class="form-label">Candidate</label><select class="form-select"><option>Lena Müller</option><option>Marcus Khumalo</option><option>Priya Nair</option><option>Kwame Osei</option></select></div>
+      <div class="form-row">
+        <div class="form-field"><label class="form-label">Interview Type</label><select class="form-select"><option>Screening Call</option><option>Technical Interview</option><option>Final Round</option><option>Culture Fit</option></select></div>
+        <div class="form-field"><label class="form-label">Duration</label><select class="form-select"><option>30 minutes</option><option>60 minutes</option><option>90 minutes</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-field"><label class="form-label">Date</label><input class="form-input" type="date"/></div>
+        <div class="form-field"><label class="form-label">Start Time</label><input class="form-input" type="time" value="10:00"/></div>
+      </div>
+      <div class="form-field"><label class="form-label">Interviewer(s)</label><input class="form-input" placeholder="e.g. Tino Dube, Sarah Moyo"/></div>
+      <div class="form-field"><label class="form-label">Video Link (auto-generated)</label><input class="form-input" value="meet.google.com/hf-auto-abc123" style="color:var(--blue2);"/></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('schedule-interview')">Cancel</button>
+      <button class="btn btn-primary">Schedule & Notify Candidate →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── NAVIGATION ──
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const v = document.getElementById('view-' + id);
+  if (v) v.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    const oc = n.getAttribute('onclick') || '';
+    if (oc.includes("'" + id + "'")) n.classList.add('active');
+  });
+}
+
+// ── CANDIDATE PROFILE ──
+function showProfile(name, role, stage, score) {
+  const parts = name.split(' ');
+  const last = parts.pop();
+  document.getElementById('prof-name-title').innerHTML = parts.join(' ') + ' <em>' + last + '</em>';
+  document.getElementById('prof-role-sub').textContent = 'Applying for: ' + role;
+  document.getElementById('prof-fullname').textContent = name;
+  document.getElementById('prof-role-tag').textContent = role;
+  document.getElementById('prof-av').textContent = name.split(' ').map(w => w[0]).join('');
+  document.getElementById('prof-score').textContent = score;
+  document.getElementById('prof-stage-val').innerHTML = '<span class="pill-dot"></span>' + stage;
+  const offset = 201 - (score / 100) * 201;
+  const ring = document.getElementById('prof-ring');
+  ring.style.strokeDashoffset = offset;
+  ring.style.stroke = score >= 75 ? 'var(--green)' : score >= 55 ? 'var(--blue2)' : 'var(--amber)';
+  showView('profile');
+}
+
+// ── FILTERS ──
+function filterCands(stage, el) {
+  document.querySelectorAll('.filter').forEach(f => f.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.cand-row').forEach(r => {
+    r.style.display = (stage === 'all' || r.dataset.stage === stage) ? 'flex' : 'none';
+  });
+}
+
+// ── MODALS ──
+function openModal(id) { document.getElementById('modal-' + id).classList.add('open'); }
+function closeModal(id) { document.getElementById('modal-' + id).classList.remove('open'); }
+document.querySelectorAll('.modal-back').forEach(b => {
+  b.addEventListener('click', e => { if (e.target === b) b.classList.remove('open'); });
+});
+
+// ── EMAIL TYPES ──
+function setEmailType(type, el) {
+  document.querySelectorAll('.compose-type').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const templates = {
+    'Offer Letter': 'Dear [Name],\n\nWe are delighted to offer you the position of [Role] at Hire Flow...\n\n',
+    'Rejection': 'Dear [Name],\n\nThank you for taking the time to interview with us. After careful consideration...\n\n',
+    'Interview Invite': 'Dear [Name],\n\nWe would like to invite you to the next stage of the hiring process...\n\n',
+    'Reply': ''
+  };
+  document.getElementById('compose-area').placeholder = templates[type] || 'Compose your message...';
+}
+
+// ── THEME ──
+let isDark = true;
+function toggleTheme() {
+  isDark = !isDark;
+  applyTheme();
+}
+function setTheme(mode, el) {
+  document.querySelectorAll('.compose-type').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  isDark = mode === 'dark';
+  applyTheme();
+}
+function applyTheme() {
+  const btn = document.getElementById('theme-btn');
+  if (isDark) {
+    document.documentElement.style.setProperty('--bg', '#000000');
+    document.documentElement.style.setProperty('--bg2', '#07070d');
+    document.documentElement.style.setProperty('--bg3', '#0d0d18');
+    document.documentElement.style.setProperty('--sur', '#0f0f1a');
+    document.documentElement.style.setProperty('--g1', 'rgba(255,255,255,0.88)');
+    document.documentElement.style.setProperty('--g2', 'rgba(255,255,255,0.52)');
+    document.documentElement.style.setProperty('--g3', 'rgba(255,255,255,0.26)');
+    btn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg> Light';
+  } else {
+    document.documentElement.style.setProperty('--bg', '#f0f0f5');
+    document.documentElement.style.setProperty('--bg2', '#e8e8f0');
+    document.documentElement.style.setProperty('--bg3', '#dcdcea');
+    document.documentElement.style.setProperty('--sur', '#ffffff');
+    document.documentElement.style.setProperty('--g1', 'rgba(0,0,0,0.85)');
+    document.documentElement.style.setProperty('--g2', 'rgba(0,0,0,0.55)');
+    document.documentElement.style.setProperty('--g3', 'rgba(0,0,0,0.3)');
+    btn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Dark';
+  }
+}
+
+// ── SETTINGS NAV ──
+function settingsTab(el) {
+  document.querySelectorAll('.settings-nav-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>

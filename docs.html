@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Docs — Hire Flow</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --black: #000000;
+  --white: #ffffff;
+  --blue-silk: #2448a5;
+  --sans: 'Outfit', sans-serif;
+  --mono: 'DM Mono', monospace;
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --sidebar-w: 260px;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--sans);
+  background: #000;
+  color: var(--white);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  height: 58px;
+  background: rgba(0,0,0,0.92);
+  border-bottom: 1px solid #1a1a1a;
+  backdrop-filter: blur(14px);
+  display: flex;
+  align-items: center;
+  padding: 0 28px;
+  gap: 28px;
+}
+.topbar-logo {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.topbar-logo .hire {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-style: normal;
+  letter-spacing: 3.5px;
+  text-transform: uppercase;
+  font-size: 0.76rem;
+  color: rgba(255,255,255,0.85);
+}
+.topbar-logo .flow {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-style: italic;
+  font-size: 1.35rem;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+}
+.topbar-divider {
+  width: 1px;
+  height: 20px;
+  background: #222;
+  flex-shrink: 0;
+}
+.topbar-tag {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+}
+.topbar-search {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #0f0f0f;
+  border: 1px solid #222;
+  border-radius: 7px;
+  padding: 8px 14px;
+  width: 240px;
+  cursor: text;
+}
+.topbar-search input {
+  background: none;
+  border: none;
+  outline: none;
+  font-family: var(--sans);
+  font-size: 0.84rem;
+  color: rgba(255,255,255,0.5);
+  width: 100%;
+}
+.topbar-search input::placeholder { color: rgba(255,255,255,0.25); }
+.search-icon { color: rgba(255,255,255,0.25); font-size: 0.8rem; flex-shrink: 0; }
+.topbar-back {
+  font-family: var(--sans);
+  font-size: 0.84rem;
+  font-weight: 400;
+  color: rgba(255,255,255,0.4);
+  text-decoration: none;
+  transition: color 0.2s;
+  white-space: nowrap;
+}
+.topbar-back:hover { color: rgba(255,255,255,0.8); }
+
+/* ── LAYOUT ── */
+.layout {
+  display: flex;
+  padding-top: 58px;
+  min-height: 100vh;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  position: fixed;
+  top: 58px;
+  left: 0;
+  bottom: 0;
+  overflow-y: auto;
+  border-right: 1px solid #141414;
+  background: #020202;
+  padding: 32px 0 60px;
+}
+.sidebar::-webkit-scrollbar { width: 3px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: #1e1e1e; }
+
+.sidebar-section {
+  margin-bottom: 32px;
+}
+.sidebar-section-title {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.2);
+  padding: 0 24px;
+  margin-bottom: 8px;
+}
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 24px;
+  font-size: 0.86rem;
+  font-weight: 400;
+  color: rgba(255,255,255,0.45);
+  text-decoration: none;
+  transition: color 0.15s, background 0.15s;
+  border-left: 2px solid transparent;
+  cursor: pointer;
+}
+.sidebar-link:hover {
+  color: rgba(255,255,255,0.85);
+  background: #0a0a0a;
+}
+.sidebar-link.active {
+  color: var(--white);
+  border-left-color: var(--blue-silk);
+  background: #080f1e;
+}
+.sidebar-link .dot {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  flex-shrink: 0;
+}
+.sidebar-link.active .dot { background: var(--blue-silk); }
+
+/* ── MAIN CONTENT ── */
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  max-width: 820px;
+  padding: 56px 64px 120px;
+}
+
+/* ── DOC PAGES ── */
+.doc-page { display: none; }
+.doc-page.active { display: block; }
+
+/* breadcrumb */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 1px;
+  color: rgba(255,255,255,0.22);
+  margin-bottom: 36px;
+  text-transform: uppercase;
+}
+.breadcrumb span { color: rgba(255,255,255,0.4); }
+
+/* doc headings */
+.doc-h1 {
+  font-family: var(--serif);
+  font-size: 2.6rem;
+  font-weight: 400;
+  letter-spacing: -0.8px;
+  color: var(--white);
+  line-height: 1.1;
+  margin-bottom: 16px;
+}
+.doc-h1 em { font-style: italic; color: rgba(255,255,255,0.6); }
+.doc-lead {
+  font-size: 1rem;
+  font-weight: 300;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.75;
+  margin-bottom: 48px;
+  border-bottom: 1px solid #141414;
+  padding-bottom: 36px;
+  max-width: 600px;
+}
+.doc-h2 {
+  font-family: var(--sans);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--white);
+  margin: 40px 0 14px;
+  letter-spacing: -0.2px;
+}
+.doc-h3 {
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.75);
+  margin: 28px 0 10px;
+}
+.doc-p {
+  font-size: 0.92rem;
+  font-weight: 300;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.8;
+  margin-bottom: 16px;
+  max-width: 640px;
+}
+
+/* code block */
+.code-block {
+  background: #080808;
+  border: 1px solid #1e1e1e;
+  border-radius: 10px;
+  padding: 20px 24px;
+  margin: 20px 0;
+  overflow-x: auto;
+}
+.code-block pre {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.7;
+  white-space: pre;
+}
+.code-block .c-key { color: #7eb6ff; }
+.code-block .c-str { color: #a8e6a3; }
+.code-block .c-com { color: rgba(255,255,255,0.25); }
+.code-block .c-num { color: #ffb86c; }
+
+/* callout */
+.callout {
+  display: flex;
+  gap: 14px;
+  background: #080f1e;
+  border: 1px solid #1a2a4a;
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin: 24px 0;
+}
+.callout-icon { font-size: 1rem; flex-shrink: 0; padding-top: 1px; }
+.callout-text {
+  font-size: 0.87rem;
+  font-weight: 300;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.7;
+}
+.callout-text strong { color: rgba(255,255,255,0.8); font-weight: 500; }
+
+.callout.warn {
+  background: #1a1200;
+  border-color: #3a2e00;
+}
+.callout.warn .callout-text { color: rgba(255,220,100,0.6); }
+.callout.warn .callout-text strong { color: rgba(255,220,100,0.9); }
+
+/* steps */
+.steps {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 24px 0;
+  border: 1px solid #1a1a1a;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.step-item {
+  display: flex;
+  gap: 18px;
+  padding: 20px 22px;
+  border-bottom: 1px solid #141414;
+  background: #070707;
+}
+.step-item:last-child { border-bottom: none; }
+.step-n {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--blue-silk);
+  padding-top: 2px;
+  min-width: 24px;
+}
+.step-content h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.8);
+  margin-bottom: 5px;
+}
+.step-content p {
+  font-size: 0.84rem;
+  font-weight: 300;
+  color: rgba(255,255,255,0.38);
+  line-height: 1.6;
+}
+
+/* table */
+.doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0;
+  font-size: 0.85rem;
+}
+.doc-table th {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.25);
+  text-align: left;
+  padding: 10px 16px;
+  border-bottom: 1px solid #1e1e1e;
+}
+.doc-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #111;
+  color: rgba(255,255,255,0.5);
+  font-weight: 300;
+  line-height: 1.5;
+}
+.doc-table tr:hover td { background: #070707; }
+.doc-table code {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  background: #111;
+  padding: 2px 7px;
+  border-radius: 4px;
+  color: #7eb6ff;
+}
+
+/* tag pills */
+.tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 1px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-right: 6px;
+}
+.tag-get { background: #0a2a1a; color: #4ade80; border: 1px solid #1a4a2a; }
+.tag-post { background: #0a1a2a; color: #60a5fa; border: 1px solid #1a3a5a; }
+.tag-del { background: #2a0a0a; color: #f87171; border: 1px solid #4a1a1a; }
+
+/* on-this-page */
+.on-this-page {
+  position: fixed;
+  top: 100px;
+  right: 32px;
+  width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.otp-title {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.18);
+  margin-bottom: 12px;
+}
+.otp-link {
+  font-size: 0.8rem;
+  font-weight: 300;
+  color: rgba(255,255,255,0.28);
+  text-decoration: none;
+  padding: 5px 0 5px 12px;
+  border-left: 1px solid #1e1e1e;
+  transition: color 0.15s, border-color 0.15s;
+  cursor: pointer;
+}
+.otp-link:hover {
+  color: rgba(255,255,255,0.65);
+  border-left-color: #444;
+}
+
+/* quick cards on landing */
+.doc-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin: 32px 0;
+}
+.doc-card {
+  background: #080808;
+  border: 1px solid #1a1a1a;
+  border-radius: 10px;
+  padding: 22px 20px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  text-decoration: none;
+  display: block;
+}
+.doc-card:hover {
+  border-color: #2a2a2a;
+  background: #0c0c0c;
+}
+.doc-card-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.82);
+  margin-bottom: 6px;
+  letter-spacing: -0.2px;
+}
+.doc-card-desc {
+  font-size: 0.82rem;
+  font-weight: 300;
+  color: rgba(255,255,255,0.32);
+  line-height: 1.6;
+}
+.doc-card-arrow {
+  margin-top: 14px;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.2);
+}
+
+@media (max-width: 1100px) {
+  .on-this-page { display: none; }
+}
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; padding: 32px 24px 80px; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <a class="topbar-logo" href="hireflow.html">
+    <span class="hire">Hire</span><span class="flow">Flow</span>
+  </a>
+  <div class="topbar-divider"></div>
+  <span class="topbar-tag">Documentation</span>
+  <div class="topbar-search">
+    <span class="search-icon">⌕</span>
+    <input type="text" placeholder="Search docs..." id="searchInput" oninput="handleSearch(this.value)"/>
+  </div>
+  <a class="topbar-back" href="index.html">← Back to site</a>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Getting Started</div>
+      <a class="sidebar-link active" onclick="showPage('overview')"><span class="dot"></span>Overview</a>
+      <a class="sidebar-link" onclick="showPage('quickstart')"><span class="dot"></span>Quick Start</a>
+      <a class="sidebar-link" onclick="showPage('installation')"><span class="dot"></span>Installation</a>
+      <a class="sidebar-link" onclick="showPage('authentication')"><span class="dot"></span>Authentication</a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Core Concepts</div>
+      <a class="sidebar-link" onclick="showPage('pipeline')"><span class="dot"></span>Pipeline</a>
+      <a class="sidebar-link" onclick="showPage('candidates')"><span class="dot"></span>Candidates</a>
+      <a class="sidebar-link" onclick="showPage('scorecards')"><span class="dot"></span>Scorecards</a>
+      <a class="sidebar-link" onclick="showPage('stages')"><span class="dot"></span>Stages</a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">API Reference</div>
+      <a class="sidebar-link" onclick="showPage('api-overview')"><span class="dot"></span>API Overview</a>
+      <a class="sidebar-link" onclick="showPage('api-candidates')"><span class="dot"></span>Candidates API</a>
+      <a class="sidebar-link" onclick="showPage('api-jobs')"><span class="dot"></span>Jobs API</a>
+      <a class="sidebar-link" onclick="showPage('api-webhooks')"><span class="dot"></span>Webhooks</a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Integrations</div>
+      <a class="sidebar-link" onclick="showPage('slack')"><span class="dot"></span>Slack</a>
+      <a class="sidebar-link" onclick="showPage('calendar')"><span class="dot"></span>Calendar Sync</a>
+      <a class="sidebar-link" onclick="showPage('hris')"><span class="dot"></span>HRIS Integrations</a>
+      <a class="sidebar-link" onclick="showPage('ats')"><span class="dot"></span>ATS Migration</a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Account</div>
+      <a class="sidebar-link" onclick="showPage('team')"><span class="dot"></span>Team Management</a>
+      <a class="sidebar-link" onclick="showPage('permissions')"><span class="dot"></span>Permissions</a>
+      <a class="sidebar-link" onclick="showPage('billing')"><span class="dot"></span>Billing</a>
+      <a class="sidebar-link" onclick="showPage('sso')"><span class="dot"></span>SSO & SCIM</a>
+    </div>
+
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- OVERVIEW -->
+    <div class="doc-page active" id="page-overview">
+      <div class="breadcrumb">Getting Started <span>›</span> Overview</div>
+      <h1 class="doc-h1">Welcome to <em>Hire Flow</em></h1>
+      <p class="doc-lead">Hire Flow is a modern hiring platform that helps teams source, screen, and close candidates without the chaos. This documentation covers everything from initial setup to advanced API usage.</p>
+
+      <h2 class="doc-h2">What you can do with Hire Flow</h2>
+      <p class="doc-p">Hire Flow gives your team a single place to manage every stage of the hiring process — from the first job post to the signed offer letter. No more switching between spreadsheets, email threads, and calendar apps.</p>
+
+      <div class="doc-cards">
+        <a class="doc-card" onclick="showPage('quickstart')">
+          <div class="doc-card-title">Quick Start</div>
+          <div class="doc-card-desc">Get your first job live and pipeline running in under 10 minutes.</div>
+          <div class="doc-card-arrow">→</div>
+        </a>
+        <a class="doc-card" onclick="showPage('api-overview')">
+          <div class="doc-card-title">API Reference</div>
+          <div class="doc-card-desc">Full REST API documentation with request and response examples.</div>
+          <div class="doc-card-arrow">→</div>
+        </a>
+        <a class="doc-card" onclick="showPage('slack')">
+          <div class="doc-card-title">Integrations</div>
+          <div class="doc-card-desc">Connect Slack, Google Calendar, Greenhouse, Workday and more.</div>
+          <div class="doc-card-arrow">→</div>
+        </a>
+        <a class="doc-card" onclick="showPage('pipeline')">
+          <div class="doc-card-title">Core Concepts</div>
+          <div class="doc-card-desc">Understand pipelines, stages, scorecards and candidate flows.</div>
+          <div class="doc-card-arrow">→</div>
+        </a>
+      </div>
+
+      <h2 class="doc-h2">How it's organised</h2>
+      <p class="doc-p">This documentation is split into four main sections. Use the sidebar to navigate between them at any time.</p>
+      <table class="doc-table">
+        <thead><tr><th>Section</th><th>What it covers</th></tr></thead>
+        <tbody>
+          <tr><td>Getting Started</td><td>Installation, authentication and your first pipeline</td></tr>
+          <tr><td>Core Concepts</td><td>How pipelines, candidates, scorecards and stages work</td></tr>
+          <tr><td>API Reference</td><td>Full REST API with endpoints, parameters and examples</td></tr>
+          <tr><td>Integrations</td><td>Connecting third-party tools to your Hire Flow workspace</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- QUICK START -->
+    <div class="doc-page" id="page-quickstart">
+      <div class="breadcrumb">Getting Started <span>›</span> Quick Start</div>
+      <h1 class="doc-h1">Quick <em>Start</em></h1>
+      <p class="doc-lead">Get your first job live and accepting applications in under 10 minutes. No technical setup required for the basics.</p>
+
+      <h2 class="doc-h2">Before you begin</h2>
+      <p class="doc-p">You will need a Hire Flow account. If you do not have one yet, <a href="hireflow.html" style="color:#7eb6ff; text-decoration:none;">start your free trial</a> — no credit card required.</p>
+
+      <div class="callout">
+        <span class="callout-icon">💡</span>
+        <div class="callout-text"><strong>Tip:</strong> The free Starter plan lets you post up to 3 roles and explore the full pipeline before committing to a paid plan.</div>
+      </div>
+
+      <h2 class="doc-h2">Step by step</h2>
+      <ul class="steps">
+        <li class="step-item">
+          <span class="step-n">01</span>
+          <div class="step-content">
+            <h4>Create your workspace</h4>
+            <p>Sign up and set your company name, logo and timezone. This takes about 2 minutes and sets up your default pipeline template.</p>
+          </div>
+        </li>
+        <li class="step-item">
+          <span class="step-n">02</span>
+          <div class="step-content">
+            <h4>Post your first job</h4>
+            <p>Go to Jobs → New Job. Fill in the role title, department, location and description. Hire Flow generates a public careers page URL automatically.</p>
+          </div>
+        </li>
+        <li class="step-item">
+          <span class="step-n">03</span>
+          <div class="step-content">
+            <h4>Customise your pipeline stages</h4>
+            <p>The default pipeline includes Applied, Screening, Interview, and Offer. You can add, rename or remove stages to match your process.</p>
+          </div>
+        </li>
+        <li class="step-item">
+          <span class="step-n">04</span>
+          <div class="step-content">
+            <h4>Invite your team</h4>
+            <p>Go to Settings → Team and invite hiring managers or interviewers. Assign them to specific roles to control what they can see and do.</p>
+          </div>
+        </li>
+        <li class="step-item">
+          <span class="step-n">05</span>
+          <div class="step-content">
+            <h4>Share your careers page</h4>
+            <p>Copy your public careers URL from Settings → Careers Page and add it to your website. Applications will flow in automatically.</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- INSTALLATION -->
+    <div class="doc-page" id="page-installation">
+      <div class="breadcrumb">Getting Started <span>›</span> Installation</div>
+      <h1 class="doc-h1">Installation & <em>Setup</em></h1>
+      <p class="doc-lead">Install the Hire Flow SDK or embed the careers widget directly into your existing website or app.</p>
+
+      <h2 class="doc-h2">JavaScript SDK</h2>
+      <p class="doc-p">Install via npm or yarn:</p>
+      <div class="code-block"><pre><span class="c-com"># npm</span>
+npm install @hireflow/sdk
+
+<span class="c-com"># yarn</span>
+yarn add @hireflow/sdk</pre></div>
+
+      <h2 class="doc-h2">Initialise the client</h2>
+      <div class="code-block"><pre><span class="c-key">import</span> { HireFlow } <span class="c-key">from</span> <span class="c-str">'@hireflow/sdk'</span>
+
+<span class="c-key">const</span> client = <span class="c-key">new</span> HireFlow({
+  apiKey: <span class="c-str">'hf_live_xxxxxxxxxxxx'</span>,
+  workspace: <span class="c-str">'your-workspace-id'</span>
+})</pre></div>
+
+      <div class="callout warn">
+        <span class="callout-icon">⚠</span>
+        <div class="callout-text"><strong>Never expose your API key</strong> in client-side code. Always initialise the SDK on the server side and use scoped tokens for any browser-facing calls.</div>
+      </div>
+
+      <h2 class="doc-h2">Careers page embed</h2>
+      <p class="doc-p">You can embed the Hire Flow careers widget directly into any webpage with a single script tag:</p>
+      <div class="code-block"><pre><span class="c-key">&lt;div</span> id=<span class="c-str">"hireflow-jobs"</span><span class="c-key">&gt;&lt;/div&gt;</span>
+<span class="c-key">&lt;script</span>
+  src=<span class="c-str">"https://cdn.hireflow.io/embed.js"</span>
+  data-workspace=<span class="c-str">"your-workspace-id"</span>
+  data-theme=<span class="c-str">"dark"</span>
+<span class="c-key">&gt;&lt;/script&gt;</span></pre></div>
+    </div>
+
+    <!-- AUTHENTICATION -->
+    <div class="doc-page" id="page-authentication">
+      <div class="breadcrumb">Getting Started <span>›</span> Authentication</div>
+      <h1 class="doc-h1"><em>Authentication</em></h1>
+      <p class="doc-lead">All API requests must be authenticated using an API key passed in the request header.</p>
+
+      <h2 class="doc-h2">API Keys</h2>
+      <p class="doc-p">Generate API keys from your workspace under Settings → API. Each key has a type:</p>
+      <table class="doc-table">
+        <thead><tr><th>Key Type</th><th>Prefix</th><th>Use case</th></tr></thead>
+        <tbody>
+          <tr><td>Live</td><td><code>hf_live_</code></td><td>Production environment</td></tr>
+          <tr><td>Test</td><td><code>hf_test_</code></td><td>Development and testing</td></tr>
+          <tr><td>Scoped</td><td><code>hf_scope_</code></td><td>Read-only browser access</td></tr>
+        </tbody>
+      </table>
+
+      <h2 class="doc-h2">Sending the key</h2>
+      <div class="code-block"><pre><span class="c-key">curl</span> https://api.hireflow.io/v1/jobs \
+  -H <span class="c-str">"Authorization: Bearer hf_live_xxxxxxxxxxxx"</span> \
+  -H <span class="c-str">"Content-Type: application/json"</span></pre></div>
+    </div>
+
+    <!-- PIPELINE -->
+    <div class="doc-page" id="page-pipeline">
+      <div class="breadcrumb">Core Concepts <span>›</span> Pipeline</div>
+      <h1 class="doc-h1">The <em>Pipeline</em></h1>
+      <p class="doc-lead">A pipeline is the sequence of stages a candidate moves through for a given role. Each job has its own pipeline and you can customise it freely.</p>
+
+      <h2 class="doc-h2">Default stages</h2>
+      <table class="doc-table">
+        <thead><tr><th>Stage</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>Applied</td><td>Candidate has submitted their application</td></tr>
+          <tr><td>Screening</td><td>Initial review — resume screen or async video</td></tr>
+          <tr><td>Interview</td><td>One or more live interview rounds</td></tr>
+          <tr><td>Offer</td><td>Offer sent, awaiting acceptance</td></tr>
+          <tr><td>Hired</td><td>Offer accepted, candidate archived as hired</td></tr>
+        </tbody>
+      </table>
+
+      <h2 class="doc-h2">Custom stages</h2>
+      <p class="doc-p">You can add any number of custom stages between the defaults. Common additions include Take-home Assessment, Reference Check, and Background Verification.</p>
+
+      <div class="callout">
+        <span class="callout-icon">💡</span>
+        <div class="callout-text"><strong>Pipeline templates</strong> let you save a stage configuration and reuse it across multiple roles. Go to Settings → Pipeline Templates to manage them.</div>
+      </div>
+    </div>
+
+    <!-- CANDIDATES -->
+    <div class="doc-page" id="page-candidates">
+      <div class="breadcrumb">Core Concepts <span>›</span> Candidates</div>
+      <h1 class="doc-h1"><em>Candidates</em></h1>
+      <p class="doc-lead">Every person who applies to a role becomes a candidate record in Hire Flow. Candidate profiles centralise all their information, activity, and feedback in one place.</p>
+
+      <h2 class="doc-h2">Candidate profile</h2>
+      <p class="doc-p">A candidate profile contains:</p>
+      <ul style="list-style:none; display:flex; flex-direction:column; gap:8px; margin: 0 0 24px; padding-left: 4px;">
+        <li style="font-size:0.88rem; color:rgba(255,255,255,0.45); display:flex; gap:10px;"><span style="color:#2448a5;">—</span> Personal details and contact info</li>
+        <li style="font-size:0.88rem; color:rgba(255,255,255,0.45); display:flex; gap:10px;"><span style="color:#2448a5;">—</span> Resume and application materials</li>
+        <li style="font-size:0.88rem; color:rgba(255,255,255,0.45); display:flex; gap:10px;"><span style="color:#2448a5;">—</span> Stage history and timestamps</li>
+        <li style="font-size:0.88rem; color:rgba(255,255,255,0.45); display:flex; gap:10px;"><span style="color:#2448a5;">—</span> Scorecard submissions from interviewers</li>
+        <li style="font-size:0.88rem; color:rgba(255,255,255,0.45); display:flex; gap:10px;"><span style="color:#2448a5;">—</span> Internal notes and @mentions</li>
+        <li style="font-size:0.88rem; color:rgba(255,255,255,0.45); display:flex; gap:10px;"><span style="color:#2448a5;">—</span> Email communication log</li>
+      </ul>
+
+      <h2 class="doc-h2">Bulk actions</h2>
+      <p class="doc-p">Select multiple candidates in the pipeline view to move them to a new stage, send a bulk email, or archive them all at once. Bulk actions respect individual email preferences and unsubscribe statuses.</p>
+    </div>
+
+    <!-- SCORECARDS -->
+    <div class="doc-page" id="page-scorecards">
+      <div class="breadcrumb">Core Concepts <span>›</span> Scorecards</div>
+      <h1 class="doc-h1"><em>Scorecards</em></h1>
+      <p class="doc-lead">Scorecards give every interviewer a structured way to evaluate candidates consistently. They eliminate vague gut-feel feedback and create a record that the whole team can reference.</p>
+
+      <h2 class="doc-h2">Creating a scorecard</h2>
+      <ul class="steps">
+        <li class="step-item"><span class="step-n">01</span><div class="step-content"><h4>Go to the role settings</h4><p>Open the job, click Settings, then Scorecards.</p></div></li>
+        <li class="step-item"><span class="step-n">02</span><div class="step-content"><h4>Add attributes</h4><p>Define the skills or traits you want evaluated — e.g. Communication, Technical Skills, Culture Add.</p></div></li>
+        <li class="step-item"><span class="step-n">03</span><div class="step-content"><h4>Set the rating scale</h4><p>Choose from 1–5 stars, Yes/No, or a custom label scale.</p></div></li>
+        <li class="step-item"><span class="step-n">04</span><div class="step-content"><h4>Assign to stages</h4><p>Attach the scorecard to the relevant interview stage so it appears automatically after each interview.</p></div></li>
+      </ul>
+    </div>
+
+    <!-- STAGES -->
+    <div class="doc-page" id="page-stages">
+      <div class="breadcrumb">Core Concepts <span>›</span> Stages</div>
+      <h1 class="doc-h1">Pipeline <em>Stages</em></h1>
+      <p class="doc-lead">Stages define the checkpoints in your hiring process. Each stage can have its own automations, scorecards, email templates, and assigned reviewers.</p>
+
+      <h2 class="doc-h2">Stage automations</h2>
+      <p class="doc-p">When a candidate moves into a stage, Hire Flow can automatically send an email, schedule a reminder, or trigger a webhook. Configure automations in the stage settings panel.</p>
+
+      <div class="callout">
+        <span class="callout-icon">💡</span>
+        <div class="callout-text"><strong>Example automation:</strong> When a candidate reaches the Offer stage, automatically send the offer letter template and notify the hiring manager in Slack.</div>
+      </div>
+    </div>
+
+    <!-- API OVERVIEW -->
+    <div class="doc-page" id="page-api-overview">
+      <div class="breadcrumb">API Reference <span>›</span> Overview</div>
+      <h1 class="doc-h1">API <em>Overview</em></h1>
+      <p class="doc-lead">The Hire Flow REST API gives you programmatic access to jobs, candidates, pipeline stages, scorecards, and more. All responses are JSON.</p>
+
+      <h2 class="doc-h2">Base URL</h2>
+      <div class="code-block"><pre>https://api.hireflow.io/v1</pre></div>
+
+      <h2 class="doc-h2">Rate limits</h2>
+      <table class="doc-table">
+        <thead><tr><th>Plan</th><th>Requests / minute</th><th>Requests / day</th></tr></thead>
+        <tbody>
+          <tr><td>Starter</td><td>60</td><td>10,000</td></tr>
+          <tr><td>Growth</td><td>300</td><td>100,000</td></tr>
+          <tr><td>Enterprise</td><td>Custom</td><td>Unlimited</td></tr>
+        </tbody>
+      </table>
+
+      <h2 class="doc-h2">Response format</h2>
+      <div class="code-block"><pre>{
+  <span class="c-key">"data"</span>: { ... },
+  <span class="c-key">"meta"</span>: {
+    <span class="c-key">"page"</span>: <span class="c-num">1</span>,
+    <span class="c-key">"per_page"</span>: <span class="c-num">25</span>,
+    <span class="c-key">"total"</span>: <span class="c-num">142</span>
+  }
+}</pre></div>
+    </div>
+
+    <!-- API CANDIDATES -->
+    <div class="doc-page" id="page-api-candidates">
+      <div class="breadcrumb">API Reference <span>›</span> Candidates API</div>
+      <h1 class="doc-h1">Candidates <em>API</em></h1>
+      <p class="doc-lead">Create, read, update and move candidates through your pipeline programmatically.</p>
+
+      <h2 class="doc-h2">Endpoints</h2>
+
+      <h3 class="doc-h3"><span class="tag tag-get">GET</span> /candidates</h3>
+      <p class="doc-p">List all candidates across all jobs. Supports filtering by stage, job, date range and search query.</p>
+
+      <h3 class="doc-h3"><span class="tag tag-post">POST</span> /candidates</h3>
+      <p class="doc-p">Create a new candidate record and optionally add them directly to a specific job pipeline.</p>
+      <div class="code-block"><pre>{
+  <span class="c-key">"first_name"</span>: <span class="c-str">"Amara"</span>,
+  <span class="c-key">"last_name"</span>: <span class="c-str">"Dube"</span>,
+  <span class="c-key">"email"</span>: <span class="c-str">"amara@example.com"</span>,
+  <span class="c-key">"job_id"</span>: <span class="c-str">"job_abc123"</span>,
+  <span class="c-key">"stage"</span>: <span class="c-str">"screening"</span>
+}</pre></div>
+
+      <h3 class="doc-h3"><span class="tag tag-post">POST</span> /candidates/:id/move</h3>
+      <p class="doc-p">Move a candidate to a different pipeline stage.</p>
+
+      <h3 class="doc-h3"><span class="tag tag-del">DELETE</span> /candidates/:id</h3>
+      <p class="doc-p">Archive a candidate. This is a soft delete — the record is retained for compliance purposes.</p>
+    </div>
+
+    <!-- API JOBS -->
+    <div class="doc-page" id="page-api-jobs">
+      <div class="breadcrumb">API Reference <span>›</span> Jobs API</div>
+      <h1 class="doc-h1">Jobs <em>API</em></h1>
+      <p class="doc-lead">Manage job postings, retrieve open roles, and control their visibility programmatically.</p>
+
+      <h2 class="doc-h2">Endpoints</h2>
+
+      <h3 class="doc-h3"><span class="tag tag-get">GET</span> /jobs</h3>
+      <p class="doc-p">Returns all jobs in your workspace. Filter by status (open, closed, draft), department, or location.</p>
+
+      <h3 class="doc-h3"><span class="tag tag-post">POST</span> /jobs</h3>
+      <p class="doc-p">Create a new job posting. Set it as a draft until ready to publish.</p>
+      <div class="code-block"><pre>{
+  <span class="c-key">"title"</span>: <span class="c-str">"Senior Product Designer"</span>,
+  <span class="c-key">"department"</span>: <span class="c-str">"Design"</span>,
+  <span class="c-key">"location"</span>: <span class="c-str">"Remote"</span>,
+  <span class="c-key">"status"</span>: <span class="c-str">"open"</span>,
+  <span class="c-key">"description"</span>: <span class="c-str">"..."</span>
+}</pre></div>
+
+      <h3 class="doc-h3"><span class="tag tag-post">POST</span> /jobs/:id/close</h3>
+      <p class="doc-p">Close a job and stop accepting new applications. Existing candidates in the pipeline are unaffected.</p>
+    </div>
+
+    <!-- WEBHOOKS -->
+    <div class="doc-page" id="page-api-webhooks">
+      <div class="breadcrumb">API Reference <span>›</span> Webhooks</div>
+      <h1 class="doc-h1"><em>Webhooks</em></h1>
+      <p class="doc-lead">Webhooks allow Hire Flow to notify your systems in real time when events occur — like a candidate moving stages or an offer being accepted.</p>
+
+      <h2 class="doc-h2">Available events</h2>
+      <table class="doc-table">
+        <thead><tr><th>Event</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>candidate.created</code></td><td>New candidate added to a pipeline</td></tr>
+          <tr><td><code>candidate.stage_changed</code></td><td>Candidate moved to a new stage</td></tr>
+          <tr><td><code>offer.sent</code></td><td>Offer letter sent to a candidate</td></tr>
+          <tr><td><code>offer.accepted</code></td><td>Candidate accepted an offer</td></tr>
+          <tr><td><code>job.closed</code></td><td>A job was closed</td></tr>
+        </tbody>
+      </table>
+
+      <h2 class="doc-h2">Verifying payloads</h2>
+      <p class="doc-p">All webhook payloads include an <code>X-HireFlow-Signature</code> header. Verify it using your webhook secret to ensure the request is genuine.</p>
+      <div class="code-block"><pre><span class="c-key">const</span> signature = req.headers[<span class="c-str">'x-hireflow-signature'</span>]
+<span class="c-key">const</span> expected = crypto
+  .createHmac(<span class="c-str">'sha256'</span>, process.env.WEBHOOK_SECRET)
+  .update(req.rawBody)
+  .digest(<span class="c-str">'hex'</span>)
+
+<span class="c-key">if</span> (signature !== expected) {
+  <span class="c-key">return</span> res.status(<span class="c-num">401</span>).send(<span class="c-str">'Invalid signature'</span>)
+}</pre></div>
+    </div>
+
+    <!-- SLACK -->
+    <div class="doc-page" id="page-slack">
+      <div class="breadcrumb">Integrations <span>›</span> Slack</div>
+      <h1 class="doc-h1">Slack <em>Integration</em></h1>
+      <p class="doc-lead">Connect Hire Flow to your Slack workspace to receive real-time hiring notifications, submit scorecard feedback, and keep your team aligned without leaving Slack.</p>
+
+      <h2 class="doc-h2">Setup</h2>
+      <ul class="steps">
+        <li class="step-item"><span class="step-n">01</span><div class="step-content"><h4>Go to Integrations</h4><p>In your Hire Flow workspace, navigate to Settings → Integrations → Slack.</p></div></li>
+        <li class="step-item"><span class="step-n">02</span><div class="step-content"><h4>Authorise the Slack app</h4><p>Click Connect and authorise Hire Flow to access your Slack workspace. You will need Slack admin permissions.</p></div></li>
+        <li class="step-item"><span class="step-n">03</span><div class="step-content"><h4>Choose your notification channel</h4><p>Select the channel where hiring updates should be posted. You can set different channels per job or department.</p></div></li>
+      </ul>
+
+      <h2 class="doc-h2">What gets sent to Slack</h2>
+      <table class="doc-table">
+        <thead><tr><th>Event</th><th>Notification</th></tr></thead>
+        <tbody>
+          <tr><td>New application</td><td>Posted to the role's designated channel</td></tr>
+          <tr><td>Stage change</td><td>Notifies the assigned hiring manager</td></tr>
+          <tr><td>Scorecard submitted</td><td>Summary posted to the hiring team channel</td></tr>
+          <tr><td>Offer accepted</td><td>Celebration message to the team channel 🎉</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- CALENDAR -->
+    <div class="doc-page" id="page-calendar">
+      <div class="breadcrumb">Integrations <span>›</span> Calendar Sync</div>
+      <h1 class="doc-h1">Calendar <em>Sync</em></h1>
+      <p class="doc-lead">Hire Flow integrates with Google Calendar and Outlook to make scheduling interviews frictionless for both your team and candidates.</p>
+
+      <h2 class="doc-h2">Supported calendars</h2>
+      <p class="doc-p">Google Calendar and Microsoft Outlook / Office 365 are both fully supported. Personal calendar accounts can be connected per team member from their profile settings.</p>
+
+      <h2 class="doc-h2">Self-serve scheduling</h2>
+      <p class="doc-p">Candidates receive a scheduling link where they can pick from available slots based on your interviewers' real calendars. No back and forth required. Once booked, both sides receive calendar invites automatically.</p>
+
+      <div class="callout">
+        <span class="callout-icon">💡</span>
+        <div class="callout-text"><strong>Buffer times</strong> can be set per interviewer to prevent back-to-back interviews. Configure this in Settings → Calendar → Buffer.</div>
+      </div>
+    </div>
+
+    <!-- HRIS -->
+    <div class="doc-page" id="page-hris">
+      <div class="breadcrumb">Integrations <span>›</span> HRIS Integrations</div>
+      <h1 class="doc-h1">HRIS <em>Integrations</em></h1>
+      <p class="doc-lead">When a candidate accepts an offer, Hire Flow can push their data directly to your HRIS to kick off onboarding without any manual data entry.</p>
+
+      <h2 class="doc-h2">Supported HRIS platforms</h2>
+      <table class="doc-table">
+        <thead><tr><th>Platform</th><th>Data synced</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Workday</td><td>Profile, start date, role, department</td><td style="color:#4ade80;">Live</td></tr>
+          <tr><td>BambooHR</td><td>Full profile + custom fields</td><td style="color:#4ade80;">Live</td></tr>
+          <tr><td>HiBob</td><td>Profile, role, manager</td><td style="color:#4ade80;">Live</td></tr>
+          <tr><td>Rippling</td><td>Profile, payroll setup</td><td style="color:#60a5fa;">Beta</td></tr>
+          <tr><td>Personio</td><td>Profile, contract type</td><td style="color:#60a5fa;">Beta</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ATS -->
+    <div class="doc-page" id="page-ats">
+      <div class="breadcrumb">Integrations <span>›</span> ATS Migration</div>
+      <h1 class="doc-h1">ATS <em>Migration</em></h1>
+      <p class="doc-lead">Moving from Greenhouse, Lever, or another ATS? Hire Flow provides a guided migration tool that imports your historical data with no data loss.</p>
+
+      <h2 class="doc-h2">What gets migrated</h2>
+      <ul style="list-style:none; display:flex; flex-direction:column; gap:8px; margin: 0 0 24px; padding-left: 4px;">
+        <li style="font-size:0.88rem; color:rgba(255,255,255,0.45); display:flex; gap:10px;"><span style="color:#2448a5;">—</span> All historical candidate records</li>
+        <li style="font-size:0.88rem; color:rgba(255,255,255,0.45); display:flex; gap:10px;"><span style="color:#2448a5;">—</span> Job postings (open and closed)</li>
+        <li style="font-size:0.88rem; color:rgba(255,255,255,0.45); display:flex; gap:10px;"><span style="color:#2448a5;">—</span> Interview notes and scorecard history</li>
+        <li style="font-size:0.88rem; color:rgba(255,255,255,0.45); display:flex; gap:10px;"><span style="color:#2448a5;">—</span> Team member accounts and permissions</li>
+        <li style="font-size:0.88rem; color:rgba(255,255,255,0.45); display:flex; gap:10px;"><span style="color:#2448a5;">—</span> Custom fields and pipeline configurations</li>
+      </ul>
+
+      <div class="callout">
+        <span class="callout-icon">💡</span>
+        <div class="callout-text"><strong>Enterprise customers</strong> get a dedicated migration specialist to manage the process end to end. Contact your account manager to get started.</div>
+      </div>
+    </div>
+
+    <!-- TEAM -->
+    <div class="doc-page" id="page-team">
+      <div class="breadcrumb">Account <span>›</span> Team Management</div>
+      <h1 class="doc-h1">Team <em>Management</em></h1>
+      <p class="doc-lead">Invite your hiring team, assign roles and control who can see and do what across your workspace.</p>
+
+      <h2 class="doc-h2">Inviting members</h2>
+      <p class="doc-p">Go to Settings → Team → Invite Member. Enter their email address and choose their role. They will receive an invitation email with a link to set up their account.</p>
+
+      <h2 class="doc-h2">Roles</h2>
+      <table class="doc-table">
+        <thead><tr><th>Role</th><th>What they can do</th></tr></thead>
+        <tbody>
+          <tr><td>Admin</td><td>Full access including billing and settings</td></tr>
+          <tr><td>Recruiter</td><td>Manage all jobs, candidates and pipelines</td></tr>
+          <tr><td>Hiring Manager</td><td>View and act on assigned roles only</td></tr>
+          <tr><td>Interviewer</td><td>View assigned candidates and submit scorecards</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- PERMISSIONS -->
+    <div class="doc-page" id="page-permissions">
+      <div class="breadcrumb">Account <span>›</span> Permissions</div>
+      <h1 class="doc-h1"><em>Permissions</em></h1>
+      <p class="doc-lead">Fine-grained permissions let you control exactly what each team member can access, down to individual jobs and candidate records.</p>
+
+      <h2 class="doc-h2">Job-level permissions</h2>
+      <p class="doc-p">When creating or editing a job, you can specify which team members have access to that role's pipeline. Members not listed will not see the job or its candidates in their dashboard.</p>
+
+      <div class="callout warn">
+        <span class="callout-icon">⚠</span>
+        <div class="callout-text"><strong>Note:</strong> Admins always have full access to all jobs regardless of job-level permissions. This cannot be changed.</div>
+      </div>
+    </div>
+
+    <!-- BILLING -->
+    <div class="doc-page" id="page-billing">
+      <div class="breadcrumb">Account <span>›</span> Billing</div>
+      <h1 class="doc-h1"><em>Billing</em></h1>
+      <p class="doc-lead">Manage your subscription, update payment details, and view your invoice history from the Billing section of your workspace settings.</p>
+
+      <h2 class="doc-h2">Plans</h2>
+      <table class="doc-table">
+        <thead><tr><th>Plan</th><th>Price</th><th>Open roles</th><th>Seats</th></tr></thead>
+        <tbody>
+          <tr><td>Starter</td><td>Free</td><td>3</td><td>1</td></tr>
+          <tr><td>Growth</td><td>$79 / month</td><td>Unlimited</td><td>10</td></tr>
+          <tr><td>Enterprise</td><td>Custom</td><td>Unlimited</td><td>Unlimited</td></tr>
+        </tbody>
+      </table>
+
+      <h2 class="doc-h2">Changing your plan</h2>
+      <p class="doc-p">You can upgrade or downgrade at any time from Settings → Billing → Change Plan. Upgrades take effect immediately. Downgrades take effect at the end of your current billing cycle.</p>
+    </div>
+
+    <!-- SSO -->
+    <div class="doc-page" id="page-sso">
+      <div class="breadcrumb">Account <span>›</span> SSO & SCIM</div>
+      <h1 class="doc-h1">SSO & <em>SCIM</em></h1>
+      <p class="doc-lead">Enterprise customers can enforce Single Sign-On and automate user provisioning via SCIM for seamless access management at scale.</p>
+
+      <h2 class="doc-h2">Supported SSO providers</h2>
+      <table class="doc-table">
+        <thead><tr><th>Provider</th><th>Protocol</th></tr></thead>
+        <tbody>
+          <tr><td>Okta</td><td>SAML 2.0</td></tr>
+          <tr><td>Azure AD</td><td>SAML 2.0 / OIDC</td></tr>
+          <tr><td>Google Workspace</td><td>OIDC</td></tr>
+          <tr><td>OneLogin</td><td>SAML 2.0</td></tr>
+        </tbody>
+      </table>
+
+      <h2 class="doc-h2">SCIM provisioning</h2>
+      <p class="doc-p">SCIM 2.0 is supported for automatic user provisioning and deprovisioning. When a team member is removed from your identity provider, their Hire Flow access is revoked automatically within minutes.</p>
+
+      <div class="callout">
+        <span class="callout-icon">💡</span>
+        <div class="callout-text"><strong>SSO setup requires Enterprise plan.</strong> Contact your account manager or email enterprise@hireflow.io to enable SSO for your workspace.</div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+function showPage(id) {
+  // hide all pages
+  document.querySelectorAll('.doc-page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+
+  // show target
+  const page = document.getElementById('page-' + id);
+  if (page) page.classList.add('active');
+
+  // activate sidebar link
+  document.querySelectorAll('.sidebar-link').forEach(l => {
+    if (l.getAttribute('onclick') && l.getAttribute('onclick').includes("'" + id + "'")) {
+      l.classList.add('active');
+    }
+  });
+
+  // scroll to top
+  document.querySelector('.main').scrollTop = 0;
+  window.scrollTo(0, 0);
+}
+
+function handleSearch(val) {
+  if (!val.trim()) return;
+  const pages = {
+    'quickstart': ['quick start', 'get started', 'setup', 'first job'],
+    'authentication': ['auth', 'api key', 'token', 'bearer'],
+    'pipeline': ['pipeline', 'stages', 'workflow'],
+    'candidates': ['candidate', 'applicant'],
+    'api-overview': ['api', 'rest', 'endpoint', 'rate limit'],
+    'slack': ['slack', 'notification'],
+    'billing': ['billing', 'pricing', 'plan', 'subscription'],
+    'sso': ['sso', 'saml', 'scim', 'okta', 'single sign'],
+  };
+  const q = val.toLowerCase();
+  for (const [page, keywords] of Object.entries(pages)) {
+    if (keywords.some(k => q.includes(k))) {
+      showPage(page);
+      return;
+    }
+  }
+}
+</script>
+
+</body>
+</html>
