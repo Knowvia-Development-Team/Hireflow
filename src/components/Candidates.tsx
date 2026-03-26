@@ -1,5 +1,5 @@
-import { IconCircle } from '@/shared/components/ui/Icons';
-import { useState } from 'react';
+import { IconCircle, IconFileText, IconImage } from '@/shared/components/ui/Icons';
+import { useState, useRef } from 'react';
 import { getPillClass, getScorePips, getSourceClass } from '@/utils';
 import type { Candidate, ModalId } from '@/types';
 
@@ -14,6 +14,21 @@ interface Props {
 
 export default function Candidates({ candidates, showProfile, openModal }: Props): JSX.Element {
   const [filter, setFilter] = useState<StageFilter>('all');
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      console.log('Uploaded file:', file.name);
+      setShowUploadModal(false);
+    }
+  };
+
+  const handleGoogleDriveUpload = () => {
+    alert('Google Drive integration would open here. Connect to Google Drive in Settings to enable this feature.');
+    setShowUploadModal(false);
+  };
 
   const filtered = filter === 'all'
     ? candidates
@@ -113,6 +128,61 @@ export default function Candidates({ candidates, showProfile, openModal }: Props
           );
         })}
       </div>
+
+      {/* CV Upload Modal */}
+      {showUploadModal && (
+        <div className="modal-back" onClick={e => { if (e.target === e.currentTarget) setShowUploadModal(false); }}>
+          <div className="modal" style={{ maxWidth: 420 }}>
+            <div className="modal-hd">
+              <span className="modal-title">Upload Candidate CV</span>
+              <button className="modal-x" onClick={() => setShowUploadModal(false)} aria-label="Close">×</button>
+            </div>
+            <div className="modal-body">
+              <p style={{ marginBottom: 16, color: 'var(--g2)', fontSize: '0.85rem' }}>Choose how you want to upload candidate CVs:</p>
+              
+              <button
+                className="upload-option"
+                onClick={() => fileInputRef.current?.click()}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px',
+                  background: 'var(--bg2)', border: '1px solid var(--bor)', borderRadius: 8,
+                  width: '100%', cursor: 'pointer', marginBottom: 12, textAlign: 'left'
+                }}
+              >
+                <div style={{ fontSize: '1.5rem' }}><IconFileText size={24} /></div>
+                <div>
+                  <div style={{ fontWeight: 600, color: 'var(--white)' }}>Upload from Computer</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--g3)' }}>PDF, DOC, DOCX (max 10MB)</div>
+                </div>
+              </button>
+
+              <button
+                className="upload-option"
+                onClick={handleGoogleDriveUpload}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px',
+                  background: 'var(--bg2)', border: '1px solid var(--bor)', borderRadius: 8,
+                  width: '100%', cursor: 'pointer', textAlign: 'left'
+                }}
+              >
+                <div style={{ fontSize: '1.5rem' }}><IconImage size={24} /></div>
+                <div>
+                  <div style={{ fontWeight: 600, color: 'var(--white)' }}>Import from Google Drive</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--g3)' }}>Select files from your Drive</div>
+                </div>
+              </button>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.doc,.docx"
+                onChange={handleFileUpload}
+                style={{ display: 'none' }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

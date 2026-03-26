@@ -2,7 +2,10 @@ import { useState, useCallback, memo } from 'react';
 import {
   IconSearch, IconSun, IconMoon, IconBell, IconX,
 } from '@/shared/components/ui/Icons';
-import type { ViewId, Candidate } from '@/types';
+import type { ViewId, Candidate, Job } from '@/types';
+
+// Searchable items type for unified search
+type SearchItem = { type: 'candidate' | 'job' | 'setting'; title: string; subtitle: string; id: string };
 
 interface Props {
   isDark:       boolean;
@@ -10,41 +13,78 @@ interface Props {
   onNotifClick: () => void;
   onLogoClick:  () => void;
   candidates:   Candidate[];
+  jobs:         Job[];
   setView:      (v: ViewId, c?: Candidate) => void;
-}
+} // Props
 
 export default memo(function Topbar({
-  isDark, toggleTheme, onNotifClick, onLogoClick, candidates, setView,
+  isDark, toggleTheme, onNotifClick, onLogoClick, candidates, jobs, setView,
 }: Props): JSX.Element {
+  // Searchable items type for unified search
+  type SearchItem = { type: 'candidate' | 'job' | 'setting'; title: string; subtitle: string; id: string };
+
   const [query,   setQuery]   = useState('');
-  const [results, setResults] = useState<Candidate[]>([]);
+  const [results, setResults] = useState<SearchItem[]>([]);
   const [focused, setFocused] = useState(false);
 
   const handleSearch = useCallback((val: string) => {
     setQuery(val);
     if (!val.trim()) { setResults([]); return; }
     const q = val.toLowerCase();
-    setResults(
-      candidates
-        .filter(c =>
-          c.name.toLowerCase().includes(q) ||
-          c.email.toLowerCase().includes(q) ||
-          c.role.toLowerCase().includes(q),
-        )
-        .slice(0, 6),
-    );
-  }, [candidates]);
+    
+    // Build search results from candidates, jobs, and settings
+    const searchResults: SearchItem[] = [];
+    
+    // Search candidates
+    candidates.forEach(c => {
+      if (c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) || c.role.toLowerCase().includes(q)) {
+        searchResults.push({ type: 'candidate', title: c.name, subtitle: `${c.role} · ${c.stage}`, id: c.id });
+      }
+    });
+    
+    // Search jobs
+    jobs.forEach(j => {
+      if (j.title.toLowerCase().includes(q) || j.dept.toLowerCase().includes(q) || j.status.toLowerCase().includes(q)) {
+        searchResults.push({ type: 'job', title: j.title, subtitle: `${j.dept} · ${j.status}`, id: j.id });
+      }
+    });
+    
+    // Search settings (static items)
+    const settingsItems: SearchItem[] = [
+      { type: 'setting', title: 'Profile Settings', subtitle: 'Account & preferences', id: 'settings-profile' },
+      { type: 'setting', title: 'Team Settings', subtitle: 'Manage team members', id: 'settings-team' },
+      { type: 'setting', title: 'Email Templates', subtitle: 'Configure email templates', id: 'settings-email' },
+      { type: 'setting', title: 'Notifications', subtitle: 'Notification preferences', id: 'settings-notifications' },
+      { type: 'setting', title: 'Integrations', subtitle: 'Third-party integrations', id: 'settings-integrations' },
+      { type: 'setting', title: 'Billing', subtitle: 'Subscription & payments', id: 'settings-billing' },
+    ];
+    settingsItems.forEach(s => {
+      if (s.title.toLowerCase().includes(q) || s.subtitle.toLowerCase().includes(q)) {
+        searchResults.push(s);
+      }
+    });
+    
+    setResults(searchResults.slice(0, 8));
+  }, [candidates, jobs]);
 
   const clearSearch = useCallback(() => {
     setQuery('');
     setResults([]);
   }, []);
 
-  const selectResult = useCallback((c: Candidate) => {
+  const selectResult = useCallback((item: SearchItem) => {
     setResults([]);
     setQuery('');
-    setView('profile', c);
-  }, [setView]);
+    
+    if (item.type === 'candidate') {
+      const candidate = candidates.find(c => c.id === item.id);
+      if (candidate) setView('profile', candidate);
+    } else if (item.type === 'job') {
+      setView('jobs');
+    } else if (item.type === 'setting') {
+      setView('settings');
+    }
+  }, [candidates, setView]);
 
   return (
     <header className="topbar" role="banner">
@@ -72,12 +112,12 @@ export default memo(function Topbar({
             style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', color:'var(--g3)', pointerEvents:'none' }}
           />
 
-          <label htmlFor="global-search" className="sr-only">Search candidates by name, email or role</label>
+          <label htmlFor="global-search" className="sr-only">Search candidates, jobs, or settings</label>
           <input
             id="global-search"
             type="search"
             className="tb-search-input"
-            placeholder="Search candidates…"
+            placeholder="Search candidates, jobs, settings…"
             value={query}
             onChange={e => handleSearch(e.target.value)}
             onFocus={() => setFocused(true)}
@@ -85,7 +125,6 @@ export default memo(function Topbar({
             autoComplete="off"
             aria-autocomplete="list"
             aria-controls="search-results"
-            aria-expanded={results.length > 0}
           />
 
           {query && (
@@ -102,23 +141,25 @@ export default memo(function Topbar({
           {/* Dropdown results */}
           {results.length > 0 && (
             <div id="search-results" className="tb-search-drop" role="listbox">
-              <div className="tb-search-drop-hd">Candidates</div>
-              {results.map(c => (
+              {results.map((item) => (
                 <div
-                  key={c.id}
+                  key={`${item.type}-${item.id}`}
                   className="tb-search-item"
                   role="option"
                   aria-selected="false"
-                  onClick={() => selectResult(c)}
-                  onKeyDown={e => { if (e.key === 'Enter') selectResult(c); }}
+                  onClick={() => selectResult(item)}
+                  onKeyDown={e => { if (e.key === 'Enter') selectResult(item); }}
                   tabIndex={0}
                 >
-                  <div className="tb-si-av">{c.initials}</div>
-                  <div className="tb-si-body">
-                    <div className="tb-si-name">{c.name}</div>
-                    <div className="tb-si-meta">{c.role} · <span className={`tb-si-stage stage-${c.stageKey.toLowerCase()}`}>{c.stage}</span></div>
+                  <div className="tb-si-av">
+                    {item.type === 'candidate' && candidates.find(c => c.id === item.id)?.initials}
+                    {item.type === 'job' && '📁'}
+                    {item.type === 'setting' && '⚙️'}
                   </div>
-                  <div className="tb-si-score">{c.score}</div>
+                  <div className="tb-si-body">
+                    <div className="tb-si-name">{item.title}</div>
+                    <div className="tb-si-meta">{item.subtitle}</div>
+                  </div>
                 </div>
               ))}
             </div>

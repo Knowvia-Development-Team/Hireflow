@@ -1,9 +1,10 @@
-import type { Candidate, Job, ActivityItem, ViewId } from '@/types';
+import type { Candidate, Job, ActivityItem, ViewId, Interview } from '@/types';
 
 interface Props {
   candidates: Candidate[];
   jobs:       Job[];
   activity:   ActivityItem[];
+  interviews: Interview[];
   showView:   (v: ViewId) => void;
 }
 
@@ -21,17 +22,30 @@ const COMM = [
   { color: 'var(--green)', text: 'Scorecards submitted this week',       val: '24', cls: 'comm-ok'   },
 ] as const;
 
-export default function Dashboard({ candidates, jobs, activity, showView }: Props): JSX.Element {
+export default function Dashboard({ candidates, jobs, activity, interviews, showView }: Props): JSX.Element {
   const openJobs  = jobs.filter(j => j.status === 'Open').length;
   const offerCands = candidates.filter(c => c.stageKey === 'Offer').length;
+
+  // Dynamic greeting based on time of day
+  const now = new Date();
+  const hour = now.getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  
+  // Format date as "Wednesday, 18 March 2026"
+  const day = now.toLocaleDateString('en-GB', { weekday: 'long' });
+  const date = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  // Count today's interviews
+  const todayStr = now.toISOString().split('T')[0];
+  const todayInterviews = interviews.filter(i => i.date === todayStr).length;
 
   return (
     <div className="view">
       <div className="pg-hd">
         <div>
           <div className="pg-tag">Overview</div>
-          <h1 className="pg-title">Good morning, <em>Tino.</em></h1>
-          <div className="pg-sub">Wednesday, 18 March 2026 · 3 interviews today</div>
+          <h1 className="pg-title">{greeting}, <em>Tino.</em></h1>
+          <div className="pg-sub">{day}, {date} · {todayInterviews} interviews today</div>
         </div>
         <div className="pg-actions">
           <button className="btn btn-ghost btn-sm" onClick={() => showView('schedule')}>View Schedule</button>

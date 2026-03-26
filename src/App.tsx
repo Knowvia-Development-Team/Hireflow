@@ -339,6 +339,7 @@ export default function App(): JSX.Element {
         onNotifClick={toggleNotif}
         onLogoClick={() => setViewRaw('dashboard')}
         candidates={candidates}
+        jobs={jobs}
         setView={(v, c) => { if (v === 'profile' && c) setSelectedCandidate(c); setViewRaw(v); }}
       />
 
@@ -355,7 +356,7 @@ export default function App(): JSX.Element {
         <main id="main-content" className="main" tabIndex={-1}>
           <ErrorBoundary fallback={<SectionError message="This view encountered an error." onRetry={() => setViewRaw('dashboard')} />}>
             <Suspense fallback={<ViewSkeleton />}>
-              {view === 'dashboard'   && <Dashboard  candidates={candidates} jobs={jobs} activity={activity} showView={setViewRaw} />}
+              {view === 'dashboard'   && <Dashboard  candidates={candidates} jobs={jobs} activity={activity} interviews={interviews} showView={setViewRaw} />}
               {view === 'candidates'  && <Candidates candidates={candidates} showProfile={showProfile} openModal={setModal} />}
               {view === 'profile'     && <CandidateProfile candidate={selectedCandidate} jobs={jobs} showView={setViewRaw} advanceCandidate={advanceCandidate} rejectCandidate={rejectCandidate} openModal={setModal} showToast={showToast} onInterviewCreated={(iv) => setInterviews(prev => [...prev, iv])} onEmailLogged={(log) => addAudit(`Email ${log.status}: ${log.subject ?? ''}`)} />}
               {view === 'jobs'        && <Jobs jobs={jobs} openModal={setModal} setJobs={setJobs} showToast={showToast} openPortal={setPortalJob} />}

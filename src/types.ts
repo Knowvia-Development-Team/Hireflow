@@ -191,6 +191,8 @@ export interface NewJobFormData {
   location: string;
   desc:     string;
   skills:   string;
+  socialMedia: string[];
+  flyer:    File | null;
 }
 
 export interface NewCandidateFormData {

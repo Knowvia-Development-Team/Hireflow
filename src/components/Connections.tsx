@@ -2,6 +2,7 @@ import { IconCheck } from '@/shared/components/ui/Icons';
 import { useState } from 'react';
 import { EMAIL_TEMPLATES } from '@/data';
 import type { Email, ToastColor } from '@/types';
+import { ComposeEmailModal, type ComposeEmailData } from './Modals';
 
 interface Props {
   emails:    Email[];
@@ -13,6 +14,7 @@ export default function Connections({ emails, setEmails, showToast }: Props): JS
   const [selected,   setSelected]   = useState<Email>(emails[0]!);
   const [replyText,  setReplyText]  = useState('');
   const [emailType,  setEmailType]  = useState('Reply');
+  const [showCompose, setShowCompose] = useState(false);
 
   const sendEmail = (): void => {
     if (!replyText.trim()) return;
@@ -29,7 +31,7 @@ export default function Connections({ emails, setEmails, showToast }: Props): JS
           <h1 className="pg-title">Connections</h1>
         </div>
         <div className="pg-actions">
-          <button className="btn btn-primary btn-sm">+ Compose</button>
+          <button className="btn btn-primary btn-sm" onClick={() => setShowCompose(true)}>+ Compose</button>
         </div>
       </div>
 
@@ -91,6 +93,14 @@ export default function Connections({ emails, setEmails, showToast }: Props): JS
           </div>
         </div>
       </div>
+      {showCompose && (
+        <ComposeEmailModal
+          onClose={() => setShowCompose(false)}
+          onSubmit={(data: ComposeEmailData) => {
+            showToast('Email Sent', `Email sent to ${data.to}`, 'green');
+          }}
+        />
+      )}
     </div>
   );
 }
