@@ -145,7 +145,7 @@ function buildTaxonomy(jobText: string): SkillDef[] {
     const key = def.skill.toLowerCase();
     if (!seen.has(key)) custom.push(def);
   }
-  return custom.length ? custom : BASE_SKILLS;
+  return custom.length ? custom : [...BASE_SKILLS];
 }
 
 function extractJobSkills(jobText: string, defs: readonly SkillDef[]): Map<string, SkillKind> {
