@@ -37,3 +37,27 @@ npm-debug.log*
 # Test artefacts
 test-results/
 playwright-report/
+
+.env
+server/.env
+
+
+.env
+server/.env
+
+
+# secrets
+.env
+server/.env
+
+# deps/build
+node_modules/
+server/node_modules/
+dist/
+server/dist/
+
+# runtime/uploads/logs
+uploads/
+server/uploads/
+logs/
+*.log

@@ -31,6 +31,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--white); -we
 ::-webkit-scrollbar { width: 3px; height: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--bor3); border-radius: 2px; }
+.hidden { display: none; }
 
 /* APP SHELL */
 .hf-app { height: 100vh; display: flex; flex-direction: column; background: var(--bg); color: var(--white); }
@@ -64,7 +65,15 @@ body { font-family: var(--sans); background: var(--bg); color: var(--white); -we
 .dark-mode .nav-item.active { background: var(--bg3); color: #fff; border-left-color: #3a62c8; }
 .nav-icon { width: 16px; text-align: center; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 .nav-badge { margin-left: auto; background: var(--blue-dim); color: var(--blue2); font-family: var(--mono); font-size: 0.58rem; padding: 1px 6px; border-radius: 8px; }
-.sidebar-foot { margin-top: auto; padding: 0 10px; }
+.sidebar-foot { margin-top: auto; padding: 0 10px; position: relative; }
+.auth-loading { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); padding: 20px; }
+.auth-loading-card { background: var(--bg2); border: 1px solid var(--bor); border-radius: 16px; padding: 32px 36px; box-shadow: var(--shadow); width: min(420px, 92vw); text-align: center; }
+.auth-loading-logo { display: flex; align-items: baseline; justify-content: center; gap: 6px; margin-bottom: 16px; }
+.auth-loading-h { font-family: var(--serif); font-weight: 500; letter-spacing: 3px; text-transform: uppercase; font-size: 0.7rem; color: var(--g2); }
+.auth-loading-f { font-family: var(--serif); font-weight: 300; font-style: italic; font-size: 1.6rem; color: var(--white); }
+.auth-loading-title { font-family: var(--serif); font-size: 1.45rem; color: var(--white); margin-bottom: 6px; }
+.auth-loading-sub { font-size: 0.8rem; color: var(--g3); margin-bottom: 18px; }
+.auth-loading-spinner { width: 36px; height: 36px; margin: 0 auto; border-radius: 50%; border: 3px solid var(--bor2); border-top-color: var(--blue2); animation: spin 0.9s linear infinite; }
 .s-user { display: flex; align-items: center; gap: 9px; padding: 10px; border-radius: 8px; background: var(--bg3); border: 1px solid var(--bor); cursor: pointer; }
 .s-av { width: 26px; height: 26px; border-radius: 7px; background: var(--blue-dim); display: flex; align-items: center; justify-content: center; font-size: 0.64rem; font-weight: 600; color: var(--blue2); flex-shrink: 0; }
 .s-name { font-size: 0.8rem; font-weight: 500; color: var(--g1); }
@@ -73,7 +82,11 @@ body { font-family: var(--sans); background: var(--bg); color: var(--white); -we
 .role-recruiter { background: var(--blue-dim); color: var(--blue2); border: 1px solid rgba(58,98,200,0.2); }
 .role-interviewer { background: rgba(13,158,110,0.08); color: var(--green); border: 1px solid rgba(13,158,110,0.2); }
 .role-readonly { background: var(--bg3); color: var(--g3); border: 1px solid var(--bor2); }
-.s-dots { margin-left: auto; color: var(--g3); font-size: 0.8rem; }
+.s-dots { margin-left: auto; color: var(--g3); font-size: 0.85rem; background: none; border: none; cursor: pointer; line-height: 1; }
+.s-dots:hover { color: var(--g1); }
+.s-menu { position: absolute; right: 10px; bottom: 52px; background: var(--bg2); border: 1px solid var(--bor2); border-radius: 10px; box-shadow: var(--shadow); padding: 6px; min-width: 140px; z-index: 60; }
+.s-menu-item { width: 100%; text-align: left; background: none; border: none; padding: 7px 10px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; color: var(--g1); }
+.s-menu-item:hover { background: var(--blue-dim); }
 
 /* MAIN */
 .main { flex: 1; overflow-y: auto; background: var(--bg); }
@@ -450,7 +463,7 @@ table.tbl { width: 100%; border-collapse: collapse; }
 .portal-input:focus { border-color: var(--blue); }
 .portal-input::placeholder { color: var(--g3); }
 .portal-textarea { resize: vertical; min-height: 80px; }
-.portal-cv-drop { border: 2px dashed var(--bor2); border-radius: 10px; padding: 28px; text-align: center; cursor: pointer; background: var(--bg3); transition: border-color 0.2s; }
+.portal-cv-drop { border: 2px dashed var(--bor2); border-radius: 10px; padding: 28px; text-align: center; cursor: pointer; background: var(--bg3); transition: border-color 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; width: 100%; }
 .portal-cv-drop:hover { border-color: var(--blue2); background: var(--blue-dim); }
 .portal-cv-icon { font-size: 1.8rem; margin-bottom: 8px; opacity: 0.6; }
 .portal-cv-text { font-size: 0.84rem; color: var(--g2); margin-bottom: 4px; }

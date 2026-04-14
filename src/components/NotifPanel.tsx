@@ -15,14 +15,6 @@ interface NotifItem {
   time:   string;
 }
 
-const NOTIFS: NotifItem[] = [
-  { unread: true,  cls: 'ni-green', icon: 'check',    text: '<strong>Amara Dube</strong> accepted the offer for <strong>Senior Designer</strong>',   time: '2 min ago'  },
-  { unread: true,  cls: 'ni-blue',  icon: 'arrow',    text: '<strong>Marcus Khumalo</strong> moved to <strong>Final Interview</strong>',               time: '18 min ago' },
-  { unread: false, cls: 'ni-amber', icon: 'star',     text: 'Scorecard submitted for <strong>Priya Nair</strong> — Score: 4.2/5',                    time: '1 hr ago'   },
-  { unread: false, cls: 'ni-blue',  icon: 'file',     text: '<strong>12 new applications</strong> for <strong>Backend Engineer</strong>',              time: '2 hr ago'   },
-  { unread: false, cls: 'ni-green', icon: 'calendar', text: '<strong>Lena Müller</strong> booked her final round for tomorrow at 10am',                time: '3 hr ago'   },
-];
-
 function NotifIcon({ type }: { type: IconKey }): ReactNode {
   switch (type) {
     case 'check':    return <IconCheck     size={13} />;
@@ -33,9 +25,29 @@ function NotifIcon({ type }: { type: IconKey }): ReactNode {
   }
 }
 
-interface Props { open: boolean; onClose: () => void; }
+interface Props { open: boolean; onClose: () => void; activity: { text: string; time: string }[]; }
 
-export default function NotifPanel({ open, onClose }: Props): JSX.Element {
+const inferIcon = (text: string): { icon: IconKey; cls: string } => {
+  const lower = text.toLowerCase();
+  if (lower.includes('accepted') || lower.includes('hired')) return { icon: 'check', cls: 'ni-green' };
+  if (lower.includes('score')) return { icon: 'star', cls: 'ni-amber' };
+  if (lower.includes('application')) return { icon: 'file', cls: 'ni-blue' };
+  if (lower.includes('interview') || lower.includes('schedule')) return { icon: 'calendar', cls: 'ni-green' };
+  return { icon: 'arrow', cls: 'ni-blue' };
+};
+
+export default function NotifPanel({ open, onClose, activity }: Props): JSX.Element {
+  const notifs: NotifItem[] = activity.slice(0, 7).map((a, idx) => {
+    const { icon, cls } = inferIcon(a.text);
+    return {
+      unread: idx < 3,
+      cls,
+      icon,
+      text: a.text,
+      time: a.time,
+    };
+  });
+
   return (
     <div
       className={`notif-panel${open ? ' open' : ''}`}
@@ -55,7 +67,10 @@ export default function NotifPanel({ open, onClose }: Props): JSX.Element {
       </div>
 
       <div className="notif-list" role="list">
-        {NOTIFS.map((n, i) => (
+        {notifs.length === 0 && (
+          <div className="notif-empty">No notifications yet.</div>
+        )}
+        {notifs.map((n, i) => (
           <div
             key={i}
             className={`notif-item${n.unread ? ' unread' : ''}`}

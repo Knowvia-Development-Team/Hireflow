@@ -40,3 +40,38 @@ export function tokenize(text: string): string[] {
     .split(/\s+/)
     .filter(t => t.length > 2);
 }
+
+export function stableTextHash(text: string): string {
+  return createHash('sha256').update(text, 'utf8').digest('hex');
+}
+
+function replaceAllWithCount(text: string, regex: RegExp, replacement: string): { text: string; count: number } {
+  let count = 0;
+  const next = text.replace(regex, () => {
+    count += 1;
+    return replacement;
+  });
+  return { text: next, count };
+}
+
+export function scrubPII(input: string): { text: string; redactions: number } {
+  let text = input;
+  let redactions = 0;
+
+  const steps: Array<[RegExp, string]> = [
+    [/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, '[EMAIL]'],
+    [/\b(?:\+?\d[\d\s().-]{7,}\d)\b/g, '[PHONE]'],
+    [/\bhttps?:\/\/[^\s]+/gi, '[URL]'],
+    [/\b(?:www\.)?[a-z0-9-]+\.[a-z]{2,}(?:\/[^\s]*)?/gi, '[URL]'],
+    [/\b(linkedin|github)\s*:\s*[^\s]+/gi, '$1: [URL]'],
+  ];
+
+  for (const [regex, replacement] of steps) {
+    const res = replaceAllWithCount(text, regex, replacement);
+    text = res.text;
+    redactions += res.count;
+  }
+
+  return { text, redactions };
+}
+import { createHash } from 'node:crypto';

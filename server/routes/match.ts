@@ -1,8 +1,9 @@
 import { Router, type Request, type Response } from 'express';
 import { HfInference } from '@huggingface/inference';
 import { MODELS }      from '../models.js';
-import { parseJSON, cosineSim, clamp100, mistralPrompt, tokenize } from '../utils.js';
+import { parseJSON, cosineSim, clamp100, mistralPrompt, tokenize, scrubPII, stableTextHash } from '../utils.js';
 import type { MatchRequestBody, MistralMatchResult, MatchResult, ApiSuccess, ApiError } from '../types.js';
+import { storeAnalysisVersion } from '../services/analysis-version-store.js';
 
 const router = Router();
 
@@ -36,6 +37,10 @@ router.post('/', async (
   if (!jobText?.trim()) { res.status(400).json({ error: 'jobText is required' }); return; }
 
   const hf = new HfInference(process.env['HF_TOKEN']);
+  const safeCv = scrubPII(cvText);
+  const safeJob = scrubPII(jobText);
+  const inputHash = stableTextHash(`${safeCv.text}::${safeJob.text}`);
+  const piiRedactions = safeCv.redactions + safeJob.redactions;
 
   // ── Step 1: Mistral skill extraction + qualitative score ──────────────────
   const system = `You are a senior ATS matching engine.
@@ -60,10 +65,10 @@ Compare the CV against the job description and return ONLY valid JSON.`;
 }
 
 CV:
-${cvText.slice(0, 2000)}
+${safeCv.text.slice(0, 2000)}
 
 JOB DESCRIPTION:
-${jobText.slice(0, 1500)}`;
+${safeJob.text.slice(0, 1500)}`;
 
   let mistralData: MistralMatchResult;
   try {
@@ -94,8 +99,8 @@ ${jobText.slice(0, 1500)}`;
   }
 
   // ── Step 3: Keyword overlap ───────────────────────────────────────────────
-  const cvTokens    = new Set(tokenize(cvText));
-  const jdTokens    = tokenize(jobText);
+  const cvTokens    = new Set(tokenize(safeCv.text));
+  const jdTokens    = tokenize(safeJob.text);
   const overlap     = jdTokens.filter(t => cvTokens.has(t)).length;
   const keywordScore = clamp100((overlap / Math.max(jdTokens.length, 1)) * 200);
 
@@ -112,8 +117,32 @@ ${jobText.slice(0, 1500)}`;
       education:   clamp100(mistralData.education_fit?.score  ?? 70),
       soft_skills: clamp100(keywordScore * 0.8 + qualScore * 0.2),
     },
-    _meta: { semantic_score: semanticScore, keyword_score: keywordScore, qualitative_score: qualScore },
+    _meta: {
+      semantic_score: semanticScore,
+      keyword_score: keywordScore,
+      qualitative_score: qualScore,
+      analysis_version: 'match-v2',
+      pii_redactions: piiRedactions,
+    },
   };
+
+  const appId = (req.body as { applicationId?: string; jobId?: string } | undefined)?.applicationId;
+  const jobId = (req.body as { applicationId?: string; jobId?: string } | undefined)?.jobId;
+  if (appId) {
+    try {
+      await storeAnalysisVersion({
+        applicationId: appId,
+        jobId,
+        analysisType: 'match',
+        version: result._meta.analysis_version,
+        inputHash,
+        result,
+        piiRedactions,
+      });
+    } catch (e) {
+      console.warn('[match] version store failed:', e instanceof Error ? e.message : String(e));
+    }
+  }
 
   res.json({ success: true, data: result });
 });

@@ -10,6 +10,8 @@ import { pool } from '../lib/db.js';
 
 const schema = `
 -- Drop existing tables (in reverse order)
+DROP TABLE IF EXISTS ai_analysis_versions CASCADE;
+DROP TABLE IF EXISTS skill_gap_analyses CASCADE;
 DROP TABLE IF EXISTS activity_log CASCADE;
 DROP TABLE IF EXISTS audit_log CASCADE;
 DROP TABLE IF EXISTS emails CASCADE;
@@ -23,6 +25,7 @@ CREATE TABLE users (
   id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   name        VARCHAR(255) NOT NULL,
   email       VARCHAR(255) NOT NULL UNIQUE,
+  password    TEXT         NOT NULL,
   role        VARCHAR(50) NOT NULL DEFAULT 'recruiter',
   avatar      VARCHAR(500),
   created_at  TIMESTAMP   DEFAULT NOW(),
@@ -57,9 +60,43 @@ CREATE TABLE candidates (
   source      VARCHAR(50),
   score       INTEGER,
   cv_text     TEXT,
+  cv_url      TEXT,
+  cv_filename TEXT,
   applied     VARCHAR(50),
+  applied_at   TIMESTAMP,
+  screening_at TIMESTAMP,
+  interview_at TIMESTAMP,
+  final_at     TIMESTAMP,
+  offer_at     TIMESTAMP,
+  hired_at     TIMESTAMP,
+  rejected_at  TIMESTAMP,
   created_at  TIMESTAMP   DEFAULT NOW(),
   updated_at  TIMESTAMP   DEFAULT NOW()
+);
+
+-- Persisted skill-gap analyses (cached by application + job)
+CREATE TABLE skill_gap_analyses (
+  application_id TEXT      NOT NULL,
+  job_id         TEXT      NOT NULL DEFAULT '',
+  job_text_hash  TEXT      NOT NULL,
+  cv_text_hash   TEXT      NOT NULL,
+  result         JSONB     NOT NULL,
+  created_at     TIMESTAMP DEFAULT NOW(),
+  updated_at     TIMESTAMP DEFAULT NOW(),
+  PRIMARY KEY (application_id, job_id)
+);
+
+-- Versioned AI results for audit/traceability
+CREATE TABLE ai_analysis_versions (
+  id             UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  application_id TEXT        NOT NULL,
+  job_id         TEXT        DEFAULT '',
+  analysis_type  VARCHAR(40) NOT NULL,
+  version        VARCHAR(40) NOT NULL,
+  input_hash     TEXT        NOT NULL,
+  result         JSONB       NOT NULL,
+  pii_redactions INTEGER     DEFAULT 0,
+  created_at     TIMESTAMP   DEFAULT NOW()
 );
 
 -- Interviews table
@@ -117,6 +154,9 @@ CREATE INDEX idx_candidates_stage ON candidates(stage);
 CREATE INDEX idx_jobs_status ON jobs(status);
 CREATE INDEX idx_interviews_date ON interviews(date);
 CREATE INDEX idx_audit_log_created ON audit_log(created_at);
+CREATE INDEX idx_skill_gap_updated ON skill_gap_analyses(updated_at);
+CREATE INDEX idx_ai_analysis_app ON ai_analysis_versions(application_id);
+CREATE INDEX idx_ai_analysis_type ON ai_analysis_versions(analysis_type);
 `;
 
 async function pushSchema() {

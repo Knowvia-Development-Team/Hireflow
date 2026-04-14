@@ -3,6 +3,7 @@ import {
   IconTarget, IconTool, IconSave, IconLink, IconLoader, IconArrowRight,
 } from '@/shared/components/ui/Icons';
 import { useState, useCallback } from 'react';
+import { put } from '@/shared/lib/api/client';
 import type { Job, ModalId, ToastColor } from '@/types';
 import { fieldErrors, NewJobSchema } from '@/shared/lib/validators';
 
@@ -14,11 +15,19 @@ interface Props {
   setJobs:    React.Dispatch<React.SetStateAction<Job[]>>;
   showToast:  (title: string, msg: string, color?: ToastColor) => void;
   openPortal: (job: Job) => void;
+  onJobsChanged?: () => void;
 }
 
 // ── Job Detail / Edit Panel ───────────────────────────────────────────────────
 
-function JobDetail({ job, onEdit, onBack }: { job: Job; onEdit: () => void; onBack: () => void }): JSX.Element {
+function JobDetail({ job, onEdit, onBack, onPause, onResume, onCloseJob }: {
+  job: Job;
+  onEdit: () => void;
+  onBack: () => void;
+  onPause: () => void;
+  onResume: () => void;
+  onCloseJob: () => void;
+}): JSX.Element {
   const badgeStyle = {
     Open:   'pill-open', Draft: 'pill-draft',
     Paused: 'pill-closed', Closed: 'pill-red',
@@ -38,7 +47,20 @@ function JobDetail({ job, onEdit, onBack }: { job: Job; onEdit: () => void; onBa
             {job.salary && <span style={{ fontFamily:'var(--mono)', fontSize:'0.7rem', color:'var(--green)' }}><IconDollar size={11} style={{flexShrink:0}} /> {job.salary}</span>}
           </div>
         </div>
-        <button className="btn btn-primary btn-sm" onClick={onEdit}><span style={{display:"flex",alignItems:"center",gap:6}}><IconEdit size={13} /> Edit Job</span></button>
+        <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+          {job.status === 'Open' && (
+            <button className="btn btn-warning btn-sm" onClick={onPause}>Pause Applications</button>
+          )}
+          {job.status === 'Paused' && (
+            <button className="btn btn-primary btn-sm" onClick={onResume}>Resume Applications</button>
+          )}
+          {job.status !== 'Closed' && (
+            <button className="btn btn-ghost btn-sm" style={{ color:'var(--red)', borderColor:'rgba(220,38,38,0.3)' }} onClick={onCloseJob}>
+              Close Job
+            </button>
+          )}
+          <button className="btn btn-primary btn-sm" onClick={onEdit}><span style={{display:"flex",alignItems:"center",gap:6}}><IconEdit size={13} /> Edit Job</span></button>
+        </div>
       </div>
 
       <div className="two-col" style={{ gap:16 }}>
@@ -220,7 +242,7 @@ function JobEditForm({ job, onSave, onCancel }: {
 
 // ── Main Jobs component ───────────────────────────────────────────────────────
 
-export default function Jobs({ jobs, openModal, setJobs, showToast, openPortal }: Props): JSX.Element {
+export default function Jobs({ jobs, openModal, setJobs, showToast, openPortal, onJobsChanged }: Props): JSX.Element {
   const [panel,       setPanel]       = useState<JobView>('list');
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
@@ -229,10 +251,41 @@ export default function Jobs({ jobs, openModal, setJobs, showToast, openPortal }
     setPanel('detail');
   }, []);
 
+  const persistJob = useCallback(async (job: Job): Promise<void> => {
+    await put(`/api/data/jobs/${job.id}`, {
+      title: job.title,
+      dept: job.dept,
+      type: job.type,
+      location: job.location,
+      status: job.status,
+      salary: job.salary,
+      skills: job.skills,
+      description: job.desc,
+      applicants: job.applicants,
+    });
+    onJobsChanged?.();
+  }, []);
+
+  const updateJobStatus = useCallback((job: Job, status: Job['status']): void => {
+    const updated = { ...job, status };
+    setJobs(prev => prev.map(j => j.id === job.id ? updated : j));
+    setSelectedJob(prev => prev?.id === job.id ? updated : prev);
+    const toastMsg = status === 'Open' ? 'Applications are live.' : status === 'Paused' ? 'Applications are paused.' : 'Job is closed.';
+    showToast('Job Updated', toastMsg, status === 'Open' ? 'green' : 'amber');
+    void (async () => {
+      try {
+        await persistJob(updated);
+      } catch {
+        showToast('Save failed', 'Could not persist job status.', 'amber');
+      }
+    })();
+  }, [persistJob, setJobs, showToast]);
+
   const publishJob = useCallback((id: string): void => {
-    setJobs(prev => prev.map(j => j.id === id ? { ...j, status: 'Open' } : j));
-    showToast('Job Published', 'Job is now live.', 'green');
-  }, [setJobs, showToast]);
+    const job = jobs.find(j => j.id === id);
+    if (!job) return;
+    updateJobStatus(job, 'Open');
+  }, [jobs, updateJobStatus]);
 
   const saveJob = useCallback((updates: Partial<Job>): void => {
     if (!selectedJob) return;
@@ -242,6 +295,14 @@ export default function Jobs({ jobs, openModal, setJobs, showToast, openPortal }
     setSelectedJob(prev => prev ? { ...prev, ...updates } : prev);
     setPanel('detail');
     showToast('Job Updated', `v${updates.version} saved successfully.`, 'green');
+    const updated = { ...selectedJob, ...updates } as Job;
+    void (async () => {
+      try {
+        await persistJob(updated);
+      } catch {
+        showToast('Save failed', 'Could not persist job changes.', 'amber');
+      }
+    })();
   }, [selectedJob, setJobs, showToast]);
 
   const openJobs = jobs.filter(j => j.status === 'Open').length;
@@ -255,6 +316,9 @@ export default function Jobs({ jobs, openModal, setJobs, showToast, openPortal }
           job={selectedJob}
           onEdit={() => setPanel('edit')}
           onBack={() => setPanel('list')}
+          onPause={() => updateJobStatus(selectedJob, 'Paused')}
+          onResume={() => updateJobStatus(selectedJob, 'Open')}
+          onCloseJob={() => updateJobStatus(selectedJob, 'Closed')}
         />
       </div>
     );
@@ -324,7 +388,8 @@ export default function Jobs({ jobs, openModal, setJobs, showToast, openPortal }
                     <div style={{ display:'flex', gap:4 }}>
                       <button className="btn btn-ghost btn-sm" onClick={() => openJob(job)}>View</button>
                       {job.status === 'Draft'  && <button className="btn btn-primary btn-sm" onClick={() => publishJob(job.id)}>Publish</button>}
-                      {job.status === 'Paused' && <button className="btn btn-warning btn-sm" onClick={() => publishJob(job.id)}>Resume</button>}
+                      {job.status === 'Paused' && <button className="btn btn-warning btn-sm" onClick={() => updateJobStatus(job, 'Open')}>Resume</button>}
+                      {job.status === 'Open'   && <button className="btn btn-ghost btn-sm" onClick={() => updateJobStatus(job, 'Paused')}>Pause</button>}
                       {job.status === 'Open'   && <button className="btn btn-ghost btn-sm" onClick={() => openPortal(job)}>Apply</button>}
                     </div>
                   </td>

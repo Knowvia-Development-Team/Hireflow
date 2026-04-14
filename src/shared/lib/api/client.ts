@@ -31,6 +31,7 @@ export class NetworkError extends Error {
 
 // Token management
 let accessToken: string | null = null;
+let refreshPromise: Promise<string | null> | null = null;
 
 export function setAccessToken(token: string | null): void {
   accessToken = token;
@@ -51,15 +52,50 @@ export const apiClient = {
     request(endpoint, { ...options, method: 'DELETE' }),
 };
 
-async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
+type RequestInitWithRetry = RequestInit & { _authRetry?: boolean };
+
+async function refreshAccessToken(): Promise<string | null> {
+  if (refreshPromise) return refreshPromise;
+  refreshPromise = (async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+      if (!res.ok) return null;
+      const json = await res.json().catch(() => null);
+      const token = (json?.data?.accessToken ?? json?.accessToken) as string | undefined;
+      if (token) setAccessToken(token);
+      return token ?? null;
+    } catch {
+      return null;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+  return refreshPromise;
+}
+
+async function request<T>(endpoint: string, options?: RequestInitWithRetry): Promise<T> {
   const url = `${API_BASE}${endpoint}`;
+  const token = getAccessToken();
   const response = await fetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options?.headers,
     },
+    credentials: 'include',
   });
+
+  if (response.status === 401 && !options?._authRetry) {
+    const newToken = await refreshAccessToken();
+    if (newToken) {
+      return request<T>(endpoint, { ...options, _authRetry: true });
+    }
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Request failed' }));
@@ -191,7 +227,7 @@ export interface Candidate {
 }
 
 export interface Interview {
-  id: number;
+  id: string;
   candidate_id?: string;
   job_id?: string;
   candidate: string;

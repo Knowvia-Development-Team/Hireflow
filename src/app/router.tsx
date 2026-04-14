@@ -37,6 +37,8 @@ const Jobs             = lazy(() => import('@/components/Jobs'));
 const Schedule         = lazy(() => import('@/components/Schedule'));
 const Connections      = lazy(() => import('@/components/Connections'));
 const Settings         = lazy(() => import('@/components/Settings'));
+const HistoryPage      = lazy(() => import('@/components/HistoryPage'));
+const InterviewScoresPage = lazy(() => import('@/components/InterviewScoresPage'));
 
 // ── Shared prop types for all views ──────────────────────────────────────────
 
@@ -58,7 +60,7 @@ export interface ViewProps {
   selectedCandidate: Candidate | null;
   openModal:         (id: ModalId) => void;
   showToast:         (title: string, msg: string, color?: ToastColor) => void;
-  advanceCandidate:  (c: Candidate) => void;
+  advanceCandidate:  (c: Candidate, targetStageKey?: Candidate['stageKey']) => void;
   rejectCandidate:   (c: Candidate) => void;
   openPortal:        (j: Job) => void;
 }
@@ -82,6 +84,8 @@ export const LazyJobs             = withSuspense(Jobs);
 export const LazySchedule         = withSuspense(Schedule);
 export const LazyConnections      = withSuspense(Connections);
 export const LazySettings         = withSuspense(Settings);
+export const LazyHistoryPage      = withSuspense(HistoryPage);
+export const LazyInterviewScoresPage = withSuspense(InterviewScoresPage);
 
 // ── View switcher ─────────────────────────────────────────────────────────────
 export function renderView(view: ViewId, props: ViewProps): JSX.Element {
@@ -94,5 +98,8 @@ export function renderView(view: ViewId, props: ViewProps): JSX.Element {
     case 'schedule':    return <LazySchedule          interviews={[]} setInterviews={() => undefined} openModal={p.openModal} showToast={p.showToast} />;
     case 'connections': return <LazyConnections       emails={p.emails} setEmails={p.setEmails} showToast={p.showToast} />;
     case 'settings':    return <LazySettings          isDark={p.isDark} toggleTheme={p.toggleTheme} auditLog={p.auditLog} showToast={p.showToast} />;
+    case 'history':     return <LazyHistoryPage />;
+    case 'scores':      return <LazyInterviewScoresPage />;
+    default:            return <LazyDashboard {...p} />;
   }
 }

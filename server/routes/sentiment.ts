@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from 'express';
 import { HfInference } from '@huggingface/inference';
 import { MODELS, SENTIMENT_LABEL_MAP, THEME_CANDIDATES } from '../models.js';
-import { parseJSON, clamp100, mistralPrompt } from '../utils.js';
+import { parseJSON, clamp100, mistralPrompt, scrubPII } from '../utils.js';
 import type {
   SentimentRequestBody, MistralWritingResult,
   SentimentResult, HFTextClassificationResult,
@@ -29,17 +29,18 @@ router.post('/', async (
   if (!text?.trim()) { res.status(400).json({ error: 'text is required' }); return; }
 
   const hf = new HfInference(process.env['HF_TOKEN']);
+  const safe = scrubPII(text);
 
   // ── Run all three models concurrently ────────────────────────────────────
   const [sentimentResult, themeResult, writingResult] = await Promise.allSettled([
 
     // 1. Cardiff RoBERTa
-    hf.textClassification({ model: MODELS.SENTIMENT, inputs: text.slice(0, 512) }),
+    hf.textClassification({ model: MODELS.SENTIMENT, inputs: safe.text.slice(0, 512) }),
 
     // 2. BART zero-shot theme detection
     hf.zeroShotClassification({
       model:  MODELS.ZERO_SHOT,
-      inputs: text.slice(0, 1024),
+      inputs: safe.text.slice(0, 1024),
       parameters: { candidate_labels: [...THEME_CANDIDATES], multi_label: true },
     }),
 
@@ -67,7 +68,7 @@ Analyse the text and return ONLY a valid JSON object. No markdown, no extra text
 }
 
 TEXT:
-${text.slice(0, 2500)}`,
+${safe.text.slice(0, 2500)}`,
       ),
       parameters: { max_new_tokens: 600, temperature: 0.3, repetition_penalty: 1.1, return_full_text: false },
     }),
@@ -122,7 +123,11 @@ ${text.slice(0, 2500)}`,
     standout_sentence:     writing.standout_sentence ?? null,
     readability:           writing.readability      ?? 'Medium',
     key_themes:            keyThemes.length ? keyThemes : (writing.key_themes ?? []),
-    word_count:            text.trim().split(/\s+/).length,
+    word_count:            safe.text.trim().split(/\s+/).length,
+    _meta: {
+      analysis_version: 'sentiment-v2',
+      pii_redactions: safe.redactions,
+    },
   };
 
   res.json({ success: true, data: result });

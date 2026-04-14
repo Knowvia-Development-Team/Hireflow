@@ -1,26 +1,20 @@
-import { IconLoader, IconCheck, IconCalendar } from '@/shared/components/ui/Icons';
-import { useState, useCallback } from 'react';
+import { IconLoader, IconCheck, IconCalendar, IconPaperclip } from '@/shared/components/ui/Icons';
+import { useState, useCallback, useEffect } from 'react';
 import { getPillClass, getSourceClass } from '@/utils';
 import { autoScheduleInterview } from '@/features/pipeline/services/interviewScheduler';
+import { analysisService } from '@/features/ai-analysis/services/analysisService';
 import { logger }                from '@/shared/lib/logger';
 import type { Candidate, ModalId, ToastColor, ViewId, Job, Interview, EmailLog } from '@/types';
 
 type ProfileTab = 'overview' | 'timeline' | 'notes' | 'scorecard';
 
-const SKILLS = [
-  { name:'Figma',          match:'yes'     as const },
-  { name:'Design Systems', match:'yes'     as const },
-  { name:'Prototyping',    match:'yes'     as const },
-  { name:'User Research',  match:'partial' as const },
-  { name:'Motion Design',  match:'no'      as const },
-];
 const SCORE_DIMS = ['Problem Solving','Communication','Technical Skills','Culture Fit'] as const;
 
 interface Props {
   candidate:        Candidate | null;
   jobs:             Job[];
   showView:         (v: ViewId) => void;
-  advanceCandidate: (c: Candidate) => void;
+  advanceCandidate: (c: Candidate, targetStageKey?: Candidate['stageKey']) => void;
   rejectCandidate:  (c: Candidate) => void;
   openModal:        (id: ModalId) => void;
   showToast:        (title: string, msg: string, color?: ToastColor) => void;
@@ -36,8 +30,75 @@ export default function CandidateProfile({
   const [accepting,   setAccepting]   = useState(false);
   const [acceptDone,  setAcceptDone]  = useState(false);
   const [scheduleInfo,setScheduleInfo]= useState<{ date:string; time:string; link:string } | null>(null);
+  const [skillGap, setSkillGap] = useState<Candidate['skillGap']>(candidate?.skillGap ?? null);
+  const [skillGapLoading, setSkillGapLoading] = useState(false);
+  const [skillGapError, setSkillGapError] = useState<string | null>(null);
+  const [showFullCv, setShowFullCv] = useState(false);
 
   const matchedJob = jobs.find(j => j.title === candidate?.role) ?? jobs[0];
+
+  useEffect(() => {
+    setSkillGap(candidate?.skillGap ?? null);
+    setSkillGapLoading(false);
+    setSkillGapError(null);
+  }, [candidate?.id]);
+
+  const buildJobText = (job: Job): string =>
+    `${job.title}\n${job.desc}\nRequired skills: ${job.skills}\n${job.requirements ?? ''}\n${job.responsibilities ?? ''}`;
+
+  const runSkillGap = useCallback(async (): Promise<void> => {
+    if (!candidate || !matchedJob) return;
+    const cvText = candidate.cvText ?? '';
+    if (!cvText.trim()) {
+      showToast('Skill Gap Unavailable', 'No CV text is attached to this candidate yet.', 'amber');
+      return;
+    }
+
+    setSkillGapLoading(true);
+    setSkillGapError(null);
+    try {
+      const jobText = buildJobText(matchedJob);
+      const data = await analysisService.skillGap(
+        jobText,
+        cvText,
+        { requiredWeight: 1, niceWeight: 0.5 },
+        { applicationId: candidate.id, jobId: matchedJob.id },
+      );
+      setSkillGap(data);
+      // Persist fit score to candidate so list score matches job-fit
+      try {
+        await fetch(`/api/data/candidates/${candidate.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: candidate.name,
+            email: candidate.email,
+            role: candidate.role,
+            stage: candidate.stage,
+            stage_key: candidate.stageKey,
+            source: candidate.source,
+            score: data.fitScore,
+            applied: candidate.applied,
+            cv_text: candidate.cvText ?? null,
+            applied_at: candidate.appliedAt ?? null,
+            screening_at: candidate.screeningAt ?? null,
+            interview_at: candidate.interviewAt ?? null,
+            final_at: candidate.finalAt ?? null,
+            offer_at: candidate.offerAt ?? null,
+            hired_at: candidate.hiredAt ?? null,
+            rejected_at: candidate.rejectedAt ?? null,
+          }),
+        });
+      } catch {
+        // Non-blocking: keep UI responsive even if persistence fails
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setSkillGapError(msg);
+    } finally {
+      setSkillGapLoading(false);
+    }
+  }, [candidate, matchedJob, showToast]);
 
   const handleAccept = useCallback(async (): Promise<void> => {
     if (!candidate || !matchedJob) return;
@@ -45,7 +106,7 @@ export default function CandidateProfile({
 
     try {
       // 1. Advance to Screening (first acceptance step)
-      advanceCandidate(candidate);
+      advanceCandidate(candidate, 'Screening');
 
       // 2. Auto-schedule interview + send email
       const result = await autoScheduleInterview(
@@ -61,6 +122,13 @@ export default function CandidateProfile({
         },
       );
 
+      // 3. Move to Interview once scheduled
+      const nowIso = new Date().toISOString();
+      const stagedCandidate = candidate.stageKey === 'Screening'
+        ? candidate
+        : { ...candidate, stageKey: 'Screening', stage: 'Screening', screeningAt: candidate.screeningAt ?? nowIso };
+      advanceCandidate(stagedCandidate, 'Interview');
+
       setScheduleInfo({ date: result.date, time: result.time, link: result.meetingLink });
       setAcceptDone(true);
 
@@ -74,7 +142,18 @@ export default function CandidateProfile({
   if (!candidate) return null;
 
   const [first, ...rest] = candidate.name.split(' ');
-  const offset = 201 - (201 * candidate.score / 100);
+  const fit = skillGap?.fitScore ?? candidate.score;
+  const fitColor = fit >= 75 ? 'var(--green)' : fit >= 50 ? 'var(--amber)' : 'var(--red)';
+  const fitOffset = 201 - (201 * fit / 100);
+  const strengthsTop = (skillGap?.strengths ?? []).slice(0, 3);
+  const missingTop = (skillGap?.missing ?? []).slice(0, 2);
+  const piiRedactions = candidate.extractedData?._meta?.pii_redactions ?? null;
+  const analysisVersion = skillGap?.version ?? candidate.extractedData?._meta?.analysis_version ?? null;
+  const cvText = candidate.cvText ?? '';
+  const cvSnippet = showFullCv ? cvText : (cvText.length > 800 ? `${cvText.slice(0, 800)}…` : cvText);
+  const cvUrl = candidate.cvUrl ?? null;
+  const cvFilename = candidate.cvFilename ?? 'Download CV';
+  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
   return (
     <div className="view">
@@ -172,37 +251,170 @@ export default function CandidateProfile({
           {/* CV Match */}
           <div className="cv-match">
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-              <span style={{ fontSize:'0.85rem', fontWeight:600, color:'var(--g1)' }}>CV Match</span>
-              <span style={{ fontFamily:'var(--mono)', fontSize:'0.62rem', color:'var(--g3)' }}>Auto-analysed</span>
+              <span style={{ fontSize:'0.85rem', fontWeight:600, color:'var(--g1)' }}>Skill Gap</span>
+              <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                {piiRedactions != null && (
+                  <span className="pill pill-ghost" style={{ fontFamily:'var(--mono)', fontSize:'0.56rem' }}>
+                    PII redacted
+                  </span>
+                )}
+                {analysisVersion && (
+                  <span className="pill pill-ghost" style={{ fontFamily:'var(--mono)', fontSize:'0.56rem' }}>
+                    {analysisVersion}
+                  </span>
+                )}
+              {skillGapLoading ? (
+                <span style={{ fontFamily:'var(--mono)', fontSize:'0.62rem', color:'var(--g3)', display:'inline-flex', alignItems:'center', gap:6 }}>
+                  <IconLoader size={13} /> Analysing...
+                </span>
+              ) : (
+                <button className="btn btn-ghost btn-sm" onClick={() => void runSkillGap()} disabled={skillGapLoading}>
+                  {skillGap ? 'Re-run' : 'Analyse'}
+                </button>
+              )}
+              </div>
             </div>
+
+            {skillGapError && (
+              <div style={{ fontSize:'0.76rem', color:'var(--red)', marginBottom:10, lineHeight:1.5 }}>
+                <div>{skillGapError}</div>
+                <div style={{ marginTop:8, display:'flex', alignItems:'center', gap:8, color:'var(--g3)' }}>
+                  <button className="btn btn-ghost btn-sm" onClick={() => void runSkillGap()} disabled={skillGapLoading}>
+                    Retry
+                  </button>
+                  {skillGap && <span>Showing last saved result.</span>}
+                  {!skillGap && <span>Make sure the API server is running.</span>}
+                </div>
+              </div>
+            )}
+
             <div className="cv-match-top">
               <div className="cv-score-ring">
                 <svg viewBox="0 0 80 80">
                   <circle cx="40" cy="40" r="32" fill="none" stroke="var(--bor2)" strokeWidth="8" />
-                  <circle cx="40" cy="40" r="32" fill="none" stroke="var(--green)" strokeWidth="8"
-                    strokeDasharray="201" strokeDashoffset={offset} strokeLinecap="round"
+                  <circle cx="40" cy="40" r="32" fill="none" stroke={fitColor} strokeWidth="8"
+                    strokeDasharray="201" strokeDashoffset={fitOffset} strokeLinecap="round"
                     style={{ transform:'rotate(-90deg)', transformOrigin:'50% 50%' }} />
                 </svg>
                 <div className="cv-ring-num">
-                  <span className="cv-big-num">{candidate.score}</span>
+                  <span className="cv-big-num">{fit}</span>
                   <span className="cv-denom">/100</span>
                 </div>
               </div>
               <div>
                 <div style={{ fontSize:'0.88rem', fontWeight:600, color:'var(--g1)', marginBottom:4 }}>
-                  {candidate.score >= 80 ? 'Strong Match' : candidate.score >= 60 ? 'Good Match' : 'Partial Match'}
+                  {fit >= 80 ? 'Strong Fit' : fit >= 60 ? 'Good Fit' : 'Partial Fit'}
                 </div>
-                <div style={{ fontSize:'0.76rem', color:'var(--g3)' }}>AI-scored automatically</div>
+                <div style={{ fontSize:'0.76rem', color:'var(--g3)' }}>
+                  {skillGap ? 'Compared vs job requirements' : 'Attach CV text to enable evidence'}
+                </div>
+                {skillGap && (
+                  <div style={{ marginTop:6, fontSize:'0.72rem', color: skillGap.needsReview ? 'var(--amber)' : 'var(--g3)' }}>
+                    Confidence {skillGap.confidence}%{skillGap.needsReview ? ' • Needs review' : ''}
+                  </div>
+                )}
               </div>
             </div>
-            {SKILLS.map(s => (
-              <div key={s.name} className="cv-skill-row">
-                <span className="cv-skill-name">{s.name}</span>
-                <span className={`cv-skill-match match-${s.match}`}>
-                  {s.match === 'yes' ? 'Match' : s.match === 'partial' ? 'Partial' : 'Missing'}
-                </span>
+
+            {strengthsTop.map(s => (
+              <div key={`str-${s.skill}`} className="cv-skill-row">
+                <span className="cv-skill-name">{s.skill}</span>
+                <span className="cv-skill-match match-yes">Strength</span>
               </div>
             ))}
+            {missingTop.map(m => (
+              <div key={`mis-${m.skill}`} className="cv-skill-row">
+                <span className="cv-skill-name">{m.skill}</span>
+                <span className="cv-skill-match match-no">Missing</span>
+              </div>
+            ))}
+
+            {!skillGap && !skillGapLoading && (
+              <div style={{ fontSize:'0.76rem', color:'var(--g3)', marginTop:10, lineHeight:1.5 }}>
+                Run analysis to see top strengths/missing skills with evidence snippets.
+              </div>
+            )}
+
+            {skillGap && (
+              <details style={{ marginTop:12 }}>
+                <summary style={{ cursor:'pointer', fontFamily:'var(--mono)', fontSize:'0.62rem', color:'var(--blue2)' }}>
+                  Expand evidence
+                </summary>
+                <div style={{ marginTop:10, display:'grid', gap:10 }}>
+                  {(skillGap.explanations ?? []).length > 0 && (
+                    <div style={{ padding:'10px 12px', border:'1px dashed var(--bor)', borderRadius:10, background:'var(--bg3)' }}>
+                      <div style={{ fontFamily:'var(--mono)', fontSize:'0.6rem', letterSpacing:1, textTransform:'uppercase', color:'var(--g3)', marginBottom:6 }}>
+                        Explanation Trace
+                      </div>
+                      {(skillGap.explanations ?? []).slice(0, 4).map((line, i) => (
+                        <div key={i} style={{ fontSize:'0.78rem', color:'var(--g2)', lineHeight:1.55, marginBottom: i < (skillGap.explanations ?? []).length - 1 ? 6 : 0 }}>
+                          {line}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {strengthsTop.map(s => (
+                    <div key={`ev-${s.skill}`} style={{ padding:'10px 12px', border:'1px solid var(--bor)', borderRadius:10, background:'var(--bg3)' }}>
+                      <div style={{ fontFamily:'var(--mono)', fontSize:'0.6rem', letterSpacing:1, textTransform:'uppercase', color:'var(--g3)', marginBottom:6 }}>
+                        {s.skill}
+                      </div>
+                      {(s.evidence ?? []).length > 0 ? (
+                        (s.evidence ?? []).slice(0, 3).map((ev, i) => (
+                          <div key={i} style={{ fontSize:'0.78rem', color:'var(--g2)', lineHeight:1.55, marginBottom: i < (s.evidence ?? []).length - 1 ? 6 : 0 }}>
+                            "{ev}"
+                          </div>
+                        ))
+                      ) : (
+                        <div style={{ fontSize:'0.78rem', color:'var(--g3)' }}>No evidence snippet found in CV text.</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </details>
+            )}
+          </div>
+
+          {/* CV Preview */}
+          <div className="card" style={{ padding:16, marginTop:12 }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
+              <div style={{ fontSize:'0.85rem', fontWeight:600, color:'var(--g1)' }}>CV Preview</div>
+              {cvText && (
+                <button className="btn btn-ghost btn-sm" onClick={() => setShowFullCv(p => !p)}>
+                  {showFullCv ? 'Collapse' : 'View full'}
+                </button>
+              )}
+            </div>
+            {cvUrl && (
+              <a
+                className="btn btn-ghost btn-sm"
+                href={`${apiBase}${cvUrl}`}
+                target="_blank"
+                rel="noreferrer"
+                style={{ marginBottom: 10, display: 'inline-flex', gap: 6, alignItems: 'center' }}
+              >
+                <IconPaperclip size={12} /> {cvFilename}
+              </a>
+            )}
+            {cvText ? (
+              <div style={{
+                whiteSpace:'pre-wrap',
+                fontSize:'0.8rem',
+                color:'var(--g2)',
+                lineHeight:1.6,
+                maxHeight: showFullCv ? 320 : 180,
+                overflow:'auto',
+                border:'1px solid var(--bor)',
+                borderRadius:8,
+                padding:12,
+                background:'var(--bg3)',
+              }}>
+                {cvSnippet}
+              </div>
+            ) : (
+              <div style={{ fontSize:'0.78rem', color:'var(--g3)' }}>
+                No CV text attached yet. Upload or paste a CV to enable preview.
+              </div>
+            )}
           </div>
         </div>
 

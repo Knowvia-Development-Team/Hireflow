@@ -1,8 +1,9 @@
 import { Router, type Request, type Response } from 'express';
 import { HfInference } from '@huggingface/inference';
 import { MODELS }      from '../models.js';
-import { parseJSON, mistralPrompt, clamp100 } from '../utils.js';
+import { parseJSON, mistralPrompt, clamp100, scrubPII, stableTextHash } from '../utils.js';
 import type { ExtractRequestBody, ExtractResult, ApiSuccess, ApiError } from '../types.js';
+import { storeAnalysisVersion } from '../services/analysis-version-store.js';
 
 const router = Router();
 
@@ -14,6 +15,9 @@ router.post('/', async (
   if (!text?.trim()) { res.status(400).json({ error: 'text is required' }); return; }
 
   const hf = new HfInference(process.env['HF_TOKEN']);
+
+  const { text: safeText, redactions } = scrubPII(text);
+  const inputHash = stableTextHash(safeText);
 
   const system = `You are an expert ATS CV parser.
 Extract structured information and return ONLY a valid JSON object. No markdown or extra text.`;
@@ -40,7 +44,7 @@ Extract structured information and return ONLY a valid JSON object. No markdown 
 }
 
 CV TEXT:
-${text.slice(0, 3500)}`;
+${safeText.slice(0, 3500)}`;
 
   try {
     const output = await hf.textGeneration({
@@ -57,6 +61,22 @@ ${text.slice(0, 3500)}`;
     const data = parseJSON<ExtractResult>(output.generated_text);
     if (data.completeness_score != null) {
       data.completeness_score = clamp100(data.completeness_score);
+    }
+    data._meta = { analysis_version: 'extract-v2', pii_redactions: redactions };
+    const appId = (req.body as { applicationId?: string } | undefined)?.applicationId;
+    if (appId) {
+      try {
+        await storeAnalysisVersion({
+          applicationId: appId,
+          analysisType: 'extract',
+          version: data._meta.analysis_version,
+          inputHash,
+          result: data,
+          piiRedactions: redactions,
+        });
+      } catch (e) {
+        console.warn('[extract] version store failed:', e instanceof Error ? e.message : String(e));
+      }
     }
     res.json({ success: true, data });
   } catch (err) {

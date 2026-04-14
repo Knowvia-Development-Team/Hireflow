@@ -1,0 +1,49 @@
+Tawanda Moyo
+Harare, Zimbabwe
++263 77 123 4567
+tawanda.moyo@email.com
+LinkedIn: linkedin.com/in/tawandamoyo
+GitHub: github.com/tawandamoyo
+
+PROFESSIONAL SUMMARY
+Detail-oriented Junior Software Developer with strong foundations in full-stack development, database design, and software engineering principles. Experienced in building scalable web applications and solving real-world problems using Java, PHP, and JavaScript.
+
+TECHNICAL SKILLS
+Languages: Java, PHP, JavaScript, SQL
+Web Technologies: HTML5, CSS3, Bootstrap
+Frameworks: Laravel (Basic), Node.js (Basic)
+Databases: MySQL, MongoDB
+Tools: Git, GitHub, VS Code, XAMPP
+Concepts: OOP, REST APIs, SDLC, Agile
+
+PROJECT EXPERIENCE
+Smart Water Management System
+Designed and implemented a system for resource allocation using Java and MySQL
+Integrated real-time updates for water distribution
+Applied object-oriented programming and system modeling (UML)
+
+E-commerce Website (Crown Attire)
+Developed responsive UI for product display and checkout
+Implemented login system and cart functionality
+Integrated PayPal payment processing
+
+PROFESSIONAL EXPERIENCE
+Software Development Intern
+Tech Solutions Pvt Ltd | 2024
+Assisted in developing and maintaining company web applications
+Debugged and resolved system issues, improving performance by 20%
+Collaborated with senior developers using Git version control
+
+EDUCATION
+Bachelor of Science in Information Technology
+Chinhoyi University of Technology | 2022 – 2025
+
+CERTIFICATIONS
+Introduction to Cybersecurity
+Web Development Fundamentals
+
+KEYWORDS
+Software Development, Java, PHP, MySQL, Web Development, APIs, Debugging, Agile, Git, OOP
+
+REFERENCES
+Chair Person :  +263778836873

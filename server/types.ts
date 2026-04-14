@@ -13,6 +13,40 @@ export interface SentimentRequestBody {
   text: string;
 }
 
+export interface SkillGapOptions {
+  requiredWeight?: number;
+  niceWeight?: number;
+}
+
+export interface SkillGapRequestBody {
+  jobText: string;
+  cvText: string;
+  options?: SkillGapOptions;
+  applicationId?: string;
+  jobId?: string;
+}
+
+export interface SkillGapStrength {
+  skill: string;
+  evidence: string[];
+}
+
+export interface SkillGapMissing {
+  skill: string;
+  reason: string;
+}
+
+export interface SkillGapResult {
+  fitScore: number;
+  confidence: number;
+  needsReview: boolean;
+  explanations: string[];
+  version: string;
+  strengths: SkillGapStrength[];
+  missing: SkillGapMissing[];
+  summary: string[];
+}
+
 // ── HF Inference response shapes ─────────────────────────────────────────────
 
 export interface HFTextClassificationItem {
@@ -67,6 +101,10 @@ export interface ExtractResult {
   completeness_notes?: string;
   strengths?:          string[];
   red_flags?:          string[];
+  _meta?: {
+    analysis_version: string;
+    pii_redactions: number;
+  };
 }
 
 // ── Job match data ────────────────────────────────────────────────────────────
@@ -106,6 +144,8 @@ export interface MatchResult extends MistralMatchResult {
     semantic_score:    number;
     keyword_score:     number;
     qualitative_score: number;
+    analysis_version:  string;
+    pii_redactions:    number;
   };
 }
 
@@ -131,6 +171,10 @@ export interface SentimentResult extends MistralWritingResult {
   sentiment:  string;
   key_themes: string[];
   word_count: number;
+  _meta?: {
+    analysis_version: string;
+    pii_redactions: number;
+  };
 }
 
 // ── API response helpers ──────────────────────────────────────────────────────

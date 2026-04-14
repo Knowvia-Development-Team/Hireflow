@@ -2,10 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { analysisService } from '../services/analysisService';
 
 describe('analysisService', () => {
-  it('exports extract, match, sentiment', () => {
+  it('exports extract, match, sentiment, skillGap', () => {
     expect(typeof analysisService.extract).toBe('function');
     expect(typeof analysisService.match).toBe('function');
     expect(typeof analysisService.sentiment).toBe('function');
+    expect(typeof analysisService.skillGap).toBe('function');
   });
 
   it('extract() returns a Promise', () => {

@@ -68,6 +68,7 @@ export const PortalApplicationSchema = z.object({
   portfolio: z.string().url('Invalid URL').max(200).optional().or(z.literal('')),
   cover:     z.string().max(3000).optional(),
   source:    z.string().max(50).optional(),
+  cvText:    z.string().max(12000).optional(),
 });
 export type PortalApplicationInput = z.infer<typeof PortalApplicationSchema>;
 

@@ -6,7 +6,9 @@
 
 import { Router, type Request, type Response } from 'express';
 import { query, queryOne } from '../lib/db.js';
-import { uploadCV, handleUploadError } from '../lib/upload.js';
+import { uploadCV } from '../lib/upload.js';
+import { extractCvText } from '../lib/cv-text.js';
+import { analyseSkillGap } from '../services/skill-gap.js';
 
 interface Application {
   id: string;
@@ -26,6 +28,22 @@ interface Application {
 
 const applicationsRouter = Router();
 
+// ── POST /api/applications/cv-text ── Extract text from uploaded CV (public)
+applicationsRouter.post('/cv-text', (req: Request, res: Response) => {
+  uploadCV(req, res, async (uploadErr) => {
+    if (uploadErr) {
+      return res.status(400).json({ error: uploadErr.message });
+    }
+    if (!req.file) {
+      return res.status(400).json({ error: 'CV file is required' });
+    }
+    const { text, warnings } = await extractCvText(req.file.path, req.file.originalname);
+    const cv_url = `/uploads/cvs/${req.file.filename}`;
+    const cv_filename = req.file.originalname;
+    return res.json({ text, warnings, cv_url, cv_filename });
+  });
+});
+
 // ── POST /api/applications ── Submit an application (public, no auth)
 applicationsRouter.post('/', (req: Request, res: Response) => {
   uploadCV(req, res, async (uploadErr) => {
@@ -33,24 +51,28 @@ applicationsRouter.post('/', (req: Request, res: Response) => {
       return res.status(400).json({ error: uploadErr.message });
     }
 
-    const { job_id, full_name, email, phone, linkedin_url, cover_letter } = req.body;
+    const { job_id, full_name, email, phone, linkedin_url, cover_letter, cv_text, cv_url: body_cv_url, cv_filename: body_cv_filename, source } = req.body;
 
     if (!job_id || !full_name || !email) {
       return res.status(400).json({ error: 'job_id, full_name and email are required' });
     }
 
     // Verify job exists and is active
-    const jobCheck = await queryOne<{ id: string }>(
-      'SELECT id FROM jobs WHERE id = $1 AND (is_active = TRUE OR is_active IS NULL)',
+    const jobCheck = await queryOne<any>(
+      'SELECT * FROM jobs WHERE id = $1',
       [job_id]
     );
-    if (!jobCheck) {
+    if (!jobCheck || jobCheck?.is_active === false) {
       return res.status(404).json({ error: 'Job not found or applications are closed' });
     }
 
     try {
-      const cv_url = req.file ? `/uploads/cvs/${req.file.filename}` : null;
-      const cv_filename = req.file ? req.file.originalname : null;
+      const cv_url = req.file ? `/uploads/cvs/${req.file.filename}` : (body_cv_url ? String(body_cv_url) : null);
+      const cv_filename = req.file ? req.file.originalname : (body_cv_filename ? String(body_cv_filename) : null);
+      const cvTextResult = req.file ? await extractCvText(req.file.path, req.file.originalname) : { text: '', warnings: [] };
+      const fallbackText = typeof cv_text === 'string' ? cv_text : '';
+      const cvText = cvTextResult.text || fallbackText;
+      const analysisText = cvText.trim() ? cvText : (cover_letter ?? '');
 
       const result = await query<Application>(
         `INSERT INTO applications
@@ -73,10 +95,101 @@ applicationsRouter.post('/', (req: Request, res: Response) => {
         return res.status(500).json({ error: 'Failed to submit application' });
       }
 
+      let analysis: { fitScore: number; strengths: unknown[]; missing: unknown[]; summary: string[] } | null = null;
+      if (analysisText.trim()) {
+        try {
+          const jobText = [
+            jobCheck.title ? `Title: ${jobCheck.title}` : '',
+            jobCheck.company ? `Company: ${jobCheck.company}` : '',
+            jobCheck.description ? `Description: ${jobCheck.description}` : '',
+            jobCheck.requirements ? `Requirements: ${jobCheck.requirements}` : '',
+            jobCheck.skills ? `Skills: ${jobCheck.skills}` : '',
+            jobCheck.dept ? `Department: ${jobCheck.dept}` : '',
+          ].filter(Boolean).join('\n');
+          analysis = await analyseSkillGap(jobText, analysisText, {});
+          await query(
+            `UPDATE applications
+             SET match_score = $1,
+                 match_result = $2,
+                 ai_analyzed_at = NOW()
+             WHERE id = $3`,
+            [analysis.fitScore, analysis, application.id]
+          );
+        } catch (err) {
+          console.warn('[Applications] Analysis failed:', err instanceof Error ? err.message : String(err));
+        }
+      }
+
+      // Sync into main candidates list for admin UI
+      try {
+        const existingCandidate = await queryOne<{ id: string }>(
+          'SELECT id FROM candidates WHERE LOWER(email) = LOWER($1) AND role = $2 ORDER BY created_at DESC LIMIT 1',
+          [email, jobCheck.title]
+        );
+        const appliedLabel = 'Today';
+        const sourceLabel = source ? String(source) : (cv_url ? 'CV Upload' : 'Direct');
+        const scoreValue = analysis?.fitScore ?? null;
+
+        if (existingCandidate) {
+          await query(
+            `UPDATE candidates
+             SET name=$1,
+                 email=$2,
+                 role=$3,
+                 stage='Applied',
+                 stage_key='Applied',
+                 source=$4,
+                 score=COALESCE($5, score),
+                 applied=$6,
+                 cv_text=COALESCE($7, cv_text),
+                 cv_url=COALESCE($8, cv_url),
+                 cv_filename=COALESCE($9, cv_filename),
+                 applied_at=COALESCE($10, applied_at),
+                 updated_at=NOW()
+             WHERE id=$11`,
+            [
+              full_name,
+              email,
+              jobCheck.title,
+              sourceLabel,
+              scoreValue,
+              appliedLabel,
+              cvText || null,
+              cv_url,
+              cv_filename,
+              new Date().toISOString(),
+              existingCandidate.id,
+            ]
+          );
+        } else {
+          await query(
+            `INSERT INTO candidates
+               (name, email, role, stage, stage_key, source, score, applied, cv_text, cv_url, cv_filename, applied_at)
+             VALUES ($1,$2,$3,'Applied','Applied',$4,$5,$6,$7,$8,$9,$10)`,
+            [
+              full_name,
+              email,
+              jobCheck.title,
+              sourceLabel,
+              scoreValue,
+              appliedLabel,
+              cvText || null,
+              cv_url,
+              cv_filename,
+              new Date().toISOString(),
+            ]
+          );
+        }
+      } catch (err) {
+        console.warn('[Applications] Candidate sync failed:', err instanceof Error ? err.message : String(err));
+      }
+
       return res.status(201).json({
         success: true,
         message: 'Application submitted successfully!',
         applicationId: application.id,
+        analysis,
+        warnings: cvTextResult.warnings,
       });
     } catch (err: any) {
       console.error('[Submit Application]', err);
@@ -105,6 +218,7 @@ applicationsRouter.get('/', async (req: Request, res: Response) => {
       `SELECT
          id, full_name, email, phone, linkedin_url,
          cover_letter, cv_url, cv_filename,
+         match_score, match_result,
          status, notes, applied_at, updated_at
        FROM applications
        WHERE job_id = $1 ${statusClause}

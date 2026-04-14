@@ -1,0 +1,8 @@
+JOB: Software Developer (Junior)
+Job Description
+Develop and maintain web and mobile applications
+Write clean, efficient code using languages like Java, PHP, or JavaScript
+Work with databases (MySQL, MongoDB)
+Collaborate with designers and other developers
+Debug and test software
+

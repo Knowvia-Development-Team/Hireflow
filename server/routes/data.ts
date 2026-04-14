@@ -28,9 +28,104 @@
  */
 
 import { Router, type Request, type Response } from 'express';
+import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { query, execute } from '../lib/db.js';
+import { isMemoryDb } from '../lib/runtime.js';
 
 const router = Router();
+
+// ---------------------------------------------------------------------------
+// USERS (Team Members)
+// ---------------------------------------------------------------------------
+
+let memoryUsers = (() => {
+  const email = process.env.DEV_AUTH_EMAIL || 'mika.sato@northgrid.io';
+  const name = process.env.DEV_AUTH_NAME || 'Mika Sato';
+  const role = process.env.DEV_AUTH_ROLE || 'Admin';
+  return [
+    { id: process.env.DEV_AUTH_ID || '00000000-0000-0000-0000-000000000001', name, email, role, created_at: new Date().toISOString() },
+    { id: '00000000-0000-0000-0000-000000000002', name: 'Ari Kunda', email: 'ari.kunda@northgrid.io', role: 'Recruiter', created_at: new Date().toISOString() },
+    { id: '00000000-0000-0000-0000-000000000003', name: 'Lena Okafor', email: 'lena.okafor@northgrid.io', role: 'Interviewer', created_at: new Date().toISOString() },
+    { id: '00000000-0000-0000-0000-000000000004', name: 'Devon Hale', email: 'devon.hale@northgrid.io', role: 'Read-only', created_at: new Date().toISOString() },
+  ];
+})();
+
+const normalizeRole = (role: string | undefined): string => {
+  if (!role) return 'Recruiter';
+  const r = role.toLowerCase().replace(/_/g, '-');
+  if (r === 'admin') return 'Admin';
+  if (r === 'recruiter') return 'Recruiter';
+  if (r === 'interviewer') return 'Interviewer';
+  if (r === 'read-only' || r === 'readonly') return 'Read-only';
+  return role;
+};
+
+const generateTempPassword = (): string => {
+  const token = crypto.randomBytes(6).toString('base64url');
+  return `Hire-${token}`;
+};
+
+router.get('/users', async (_req: Request, res: Response): Promise<void> => {
+  try {
+    if (isMemoryDb) {
+      res.json(memoryUsers);
+      return;
+    }
+    const users = await query('SELECT id, name, email, role, created_at FROM users ORDER BY created_at DESC');
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+router.post('/users', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { name, email, role } = req.body as { name?: string; email?: string; role?: string };
+    if (!name || !email) {
+      res.status(400).json({ error: 'Name and email are required' });
+      return;
+    }
+    const normalizedRole = normalizeRole(role);
+    const tempPassword = generateTempPassword();
+    const passwordHash = bcrypt.hashSync(tempPassword, 10);
+
+    if (isMemoryDb) {
+      if (memoryUsers.some(u => u.email.toLowerCase() === email.toLowerCase())) {
+        res.status(409).json({ error: 'User already exists' });
+        return;
+      }
+      const newUser = {
+        id: crypto.randomUUID(),
+        name,
+        email,
+        role: normalizedRole,
+        created_at: new Date().toISOString(),
+      };
+      memoryUsers = [newUser, ...memoryUsers];
+      res.status(201).json({ user: newUser, tempPassword });
+      return;
+    }
+
+    try {
+      const result = await query(
+        `INSERT INTO users (name, email, password, role)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id, name, email, role, created_at`,
+        [name, email, passwordHash, normalizedRole]
+      );
+      res.status(201).json({ user: result[0], tempPassword });
+    } catch (err: any) {
+      if (err?.code === '23505') {
+        res.status(409).json({ error: 'User already exists' });
+        return;
+      }
+      res.status(500).json({ error: 'Failed to create user' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to create user' });
+  }
+});
 
 // ─────────────────────────────────────────────────────────────
 // JOBS
@@ -75,6 +170,8 @@ router.get('/jobs/:id', async (req: Request, res: Response): Promise<void> => {
 router.put('/jobs/:id', async (req: Request, res: Response): Promise<void> => {
   try {
     const { title, dept, type, location, status, salary, skills, description, applicants } = req.body;
+    const current = await query('SELECT id, title, status FROM jobs WHERE id = $1', [req.params.id]);
+    const currentJob = current[0] ?? null;
     const result = await query(
       `UPDATE jobs SET title=$1, dept=$2, type=$3, location=$4, status=$5, salary=$6, skills=$7, description=$8, applicants=$9, updated_at=NOW()
        WHERE id=$10 RETURNING *`,
@@ -83,6 +180,14 @@ router.put('/jobs/:id', async (req: Request, res: Response): Promise<void> => {
     if (result.length === 0) {
       res.status(404).json({ error: 'Job not found' });
       return;
+    }
+    if (currentJob && status === 'Closed' && currentJob.status !== 'Closed') {
+      await query(
+        `UPDATE candidates
+         SET stage='Screening', stage_key='Screening', screening_at=COALESCE(screening_at, NOW()), updated_at=NOW()
+         WHERE role = $1 AND stage_key = 'Applied'`,
+        [currentJob.title]
+      );
     }
     res.json(result[0]);
   } catch (err) {
@@ -105,21 +210,61 @@ router.delete('/jobs/:id', async (req: Request, res: Response): Promise<void> =>
 
 router.get('/candidates', async (_req: Request, res: Response): Promise<void> => {
   try {
-    const candidates = await query('SELECT * FROM candidates ORDER BY created_at DESC');
+    const candidates = await query(`
+      SELECT DISTINCT ON (LOWER(email)) *
+      FROM candidates
+      ORDER BY LOWER(email), (cv_text IS NOT NULL) DESC, created_at DESC
+    `);
     res.json(candidates);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch candidates' });
   }
 });
 
+router.get('/candidates/by-email', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const email = String(req.query.email ?? '').trim();
+    if (!email) {
+      res.status(400).json({ error: 'Email is required' });
+      return;
+    }
+    const candidates = await query('SELECT * FROM candidates WHERE LOWER(email) = LOWER($1) ORDER BY created_at DESC LIMIT 1', [email]);
+    if (candidates.length === 0) {
+      res.status(404).json({ error: 'Candidate not found' });
+      return;
+    }
+    res.json(candidates[0]);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch candidate' });
+  }
+});
+
 router.post('/candidates', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, email, role, stage, stage_key, source, score, applied } = req.body;
-    const initials = name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
+    const { name, email, role, stage, stage_key, source, score, applied, cv_text, cv_url, cv_filename, applied_at, screening_at, interview_at, final_at, offer_at, hired_at, rejected_at } = req.body;
     const result = await query(
-      `INSERT INTO candidates (name, email, role, stage, stage_key, source, score, applied, initials)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-      [name, email, role, stage || 'Applied', stage_key || 'Applied', source, score, applied, initials]
+      `INSERT INTO candidates (name, email, role, stage, stage_key, source, score, applied, cv_text, cv_url, cv_filename, applied_at, screening_at, interview_at, final_at, offer_at, hired_at, rejected_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) RETURNING *`,
+      [
+        name,
+        email,
+        role,
+        stage || 'Applied',
+        stage_key || 'Applied',
+        source,
+        score,
+        applied,
+        cv_text ?? null,
+        cv_url ?? null,
+        cv_filename ?? null,
+        applied_at ?? null,
+        screening_at ?? null,
+        interview_at ?? null,
+        final_at ?? null,
+        offer_at ?? null,
+        hired_at ?? null,
+        rejected_at ?? null,
+      ]
     );
     res.status(201).json(result[0]);
   } catch (err) {
@@ -142,11 +287,33 @@ router.get('/candidates/:id', async (req: Request, res: Response): Promise<void>
 
 router.put('/candidates/:id', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, email, role, stage, stage_key, source, score } = req.body;
+    const { name, email, role, stage, stage_key, source, score, applied, cv_text, cv_url, cv_filename, applied_at, screening_at, interview_at, final_at, offer_at, hired_at, rejected_at } = req.body;
     const result = await query(
-      `UPDATE candidates SET name=$1, email=$2, role=$3, stage=$4, stage_key=$5, source=$6, score=$7, updated_at=NOW()
-       WHERE id=$8 RETURNING *`,
-      [name, email, role, stage, stage_key, source, score, req.params.id]
+      `UPDATE candidates SET name=$1, email=$2, role=$3, stage=$4, stage_key=$5, source=$6, score=$7, applied=$8, cv_text=COALESCE($9, cv_text),
+       cv_url=COALESCE($10, cv_url), cv_filename=COALESCE($11, cv_filename),
+       applied_at=$12, screening_at=$13, interview_at=$14, final_at=$15, offer_at=$16, hired_at=$17, rejected_at=$18, updated_at=NOW()
+       WHERE id=$19 RETURNING *`,
+      [
+        name,
+        email,
+        role,
+        stage,
+        stage_key,
+        source,
+        score,
+        applied,
+        cv_text ?? null,
+        cv_url ?? null,
+        cv_filename ?? null,
+        applied_at ?? null,
+        screening_at ?? null,
+        interview_at ?? null,
+        final_at ?? null,
+        offer_at ?? null,
+        hired_at ?? null,
+        rejected_at ?? null,
+        req.params.id,
+      ]
     );
     if (result.length === 0) {
       res.status(404).json({ error: 'Candidate not found' });

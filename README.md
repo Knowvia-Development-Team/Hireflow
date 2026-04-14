@@ -267,6 +267,35 @@ onError: (_err, _vars, ctx) => {
 
 ## API Layer
 
+### Skill Gap Analysis (CV vs Job Requirements)
+
+Endpoint: `POST /api/analyse/skill-gap`
+
+Request body:
+```json
+{
+  "jobText": "string",
+  "cvText": "string",
+  "options": { "requiredWeight": 1, "niceWeight": 0.5 }
+}
+```
+
+Response body:
+```json
+{
+  "fitScore": 0,
+  "strengths": [{ "skill": "Java", "evidence": ["..."] }],
+  "missing": [{ "skill": "MongoDB", "reason": "..." }],
+  "summary": ["..."]
+}
+```
+
+Dev demo (uses fixtures in `server/fixtures/`):
+```bash
+npm.cmd --prefix server run dev
+npx tsx server/scripts/demo-skill-gap.ts
+```
+
 ### Axios Interceptor Flow
 
 ```
@@ -486,3 +515,17 @@ npm run typecheck    # Backend TypeScript check
 ---
 
 *Built to the standard of a 1,000,000 concurrent user production system.*
+
+---
+
+## SQLite Dev Mode (No Postgres)
+
+If you want to finish quickly without installing Postgres, set in `server/.env`:
+
+```
+DB_MODE=sqlite
+DEV_AUTH_EMAIL=mika.sato@northgrid.io
+DEV_AUTH_PASSWORD=Password123!
+```
+
+Then run the backend as usual with `npm.cmd --prefix server run dev`.

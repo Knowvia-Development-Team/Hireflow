@@ -1,39 +1,102 @@
-import { useState } from 'react';
-import { getRoleClass } from '@/utils';
+import { useEffect, useState } from 'react';
+import { getRoleClass, makeInitials } from '@/utils';
+import { useAuthStore } from '@/features/auth/store/authStore';
+import { get, post } from '@/shared/lib/api/client';
 import type { AuditEntry, ToastColor } from '@/types';
+import { InviteUserModal, type InviteUserData } from './Modals';
 
 type SettingsTab = 'general' | 'account' | 'notifications' | 'team' | 'integrations' | 'billing' | 'apikeys' | 'auditlog';
 
 interface Toggle { emailNotifs: boolean; slackNotifs: boolean; aiScoring: boolean; autoReject: boolean; }
 
-interface TeamMember { name: string; email: string; role: string; initials: string; }
-const TEAM: TeamMember[] = [
-  { name: 'Tino Dube',    email: 'tino@hireflow.io',    role: 'Admin',       initials: 'TD' },
-  { name: 'James Khumalo',email: 'james@hireflow.io',   role: 'Recruiter',   initials: 'JK' },
-  { name: 'Sarah Moyo',   email: 'sarah@hireflow.io',   role: 'Interviewer', initials: 'SM' },
-  { name: 'Priya Singh',  email: 'priya.s@hireflow.io', role: 'Read-only',   initials: 'PS' },
-];
+interface InterviewDefaults {
+  defaultDuration: number;
+  defaultType: string;
+}
+
+interface TeamMember { id: string; name: string; email: string; role: string; initials: string; }
 
 interface Integration { name: string; desc: string; active: boolean; }
 const INTEGRATIONS: Integration[] = [
-  { name: 'Google Meet', desc: 'Video interviews & calendar sync', active: true  },
-  { name: 'SendGrid',    desc: 'Transactional email delivery',     active: true  },
-  { name: 'Slack',       desc: 'Team notifications',               active: false },
-  { name: 'Zoom',        desc: 'Alternative video platform',       active: false },
+  { name: 'Google Meet', desc: 'Video interviews and calendar sync', active: true  },
+  { name: 'Resend',      desc: 'Transactional email delivery',       active: true  },
+  { name: 'Linear',      desc: 'Hiring workflow handoff to product',  active: false },
+  { name: 'Notion',      desc: 'Scorecard templates and playbooks',   active: false },
 ];
 
 const TABS: SettingsTab[] = ['general','account','notifications','team','integrations','billing','apikeys','auditlog'];
 
 interface Props {
-  isDark:       boolean;
-  toggleTheme:  () => void;
-  auditLog:     AuditEntry[];
-  showToast:    (title: string, msg: string, color?: ToastColor) => void;
+  isDark:            boolean;
+  toggleTheme:       () => void;
+  auditLog:          AuditEntry[];
+  showToast:         (title: string, msg: string, color?: ToastColor) => void;
+  interviewDefaults: { defaultDuration: number; defaultType: string };
+  onUpdateInterviewDefaults?: (defaults: { defaultDuration: number; defaultType: string }) => void;
 }
 
-export default function Settings({ isDark, toggleTheme, auditLog, showToast }: Props): JSX.Element {
+export default function Settings({ isDark, toggleTheme, auditLog, showToast, interviewDefaults, onUpdateInterviewDefaults }: Props): JSX.Element {
   const [tab,     setTab]     = useState<SettingsTab>('general');
   const [toggles, setToggles] = useState<Toggle>({ emailNotifs: true, slackNotifs: false, aiScoring: true, autoReject: false });
+  const [localDefaults, setLocalDefaults] = useState<InterviewDefaults>(interviewDefaults);
+  const user = useAuthStore(s => s.user);
+  const roleLabel = user?.role ?? 'Read-only';
+  const nameLabel = user?.name ?? '—';
+  const emailLabel = user?.email ?? '—';
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [teamLoading, setTeamLoading] = useState(false);
+  const [teamError, setTeamError] = useState<string | null>(null);
+  const [showInvite, setShowInvite] = useState(false);
+
+  const formatRole = (role: string): string => {
+    const normalized = role.toLowerCase().replace(/_/g, '-');
+    if (normalized === 'read-only' || normalized === 'readonly') return 'Read-only';
+    if (normalized === 'admin') return 'Admin';
+    if (normalized === 'recruiter') return 'Recruiter';
+    if (normalized === 'interviewer') return 'Interviewer';
+    return role;
+  };
+
+  useEffect(() => {
+    if (tab !== 'team') return;
+    let mounted = true;
+    const loadTeam = async () => {
+      setTeamLoading(true);
+      setTeamError(null);
+      try {
+        const result = await get<TeamMember[]>('/api/data/users');
+        if (!mounted) return;
+        const formatted = result.map(member => ({
+          ...member,
+          role: formatRole(member.role),
+          initials: member.initials || makeInitials(member.name),
+        }));
+        setTeamMembers(formatted);
+      } catch (error) {
+        if (!mounted) return;
+        setTeamError('Unable to load team members.');
+      } finally {
+        if (mounted) setTeamLoading(false);
+      }
+    };
+    loadTeam();
+    return () => { mounted = false; };
+  }, [tab]);
+
+  const handleInvite = async (data: InviteUserData): Promise<void> => {
+    try {
+      const result = await post<{ user: TeamMember; tempPassword: string }>('/api/data/users', data);
+      const formatted = {
+        ...result.user,
+        role: formatRole(result.user.role),
+        initials: result.user.initials || makeInitials(result.user.name),
+      };
+      setTeamMembers(prev => [formatted, ...prev]);
+      showToast('Invite sent', `${formatted.name} added. Temp password: ${result.tempPassword}`, 'green');
+    } catch (error: any) {
+      showToast('Invite failed', error?.message || 'Unable to add team member.', 'amber');
+    }
+  };
 
   const flip = (k: keyof Toggle): void => setToggles(p => ({ ...p, [k]: !p[k] }));
 
@@ -73,7 +136,66 @@ export default function Settings({ isDark, toggleTheme, auditLog, showToast }: P
                   <div key={l} className="settings-row"><div><div className="sr-label">{l}</div><div className="sr-sub">{s}</div></div><span style={{ fontFamily: 'var(--mono)', fontSize: '0.76rem', color: 'var(--g2)' }}>{v}</span></div>
                 ))}
               </div>
+              <div className="settings-section">
+                <div className="settings-sec-hd">Interview Defaults</div>
+                <div className="settings-row">
+                  <div><div className="sr-label">Default Duration</div><div className="sr-sub">Automatically set duration for new interviews</div></div>
+                  <select className="form-select" style={{ width: 120 }} value={localDefaults.defaultDuration} onChange={e => { const val = Number(e.target.value); setLocalDefaults(p => ({ ...p, defaultDuration: val })); onUpdateInterviewDefaults?.({ ...localDefaults, defaultDuration: val }); }}>
+                    <option value={15}>15 min</option>
+                    <option value={30}>30 min</option>
+                    <option value={45}>45 min</option>
+                    <option value={60}>60 min</option>
+                    <option value={90}>90 min</option>
+                    <option value={120}>120 min</option>
+                  </select>
+                </div>
+                <div className="settings-row">
+                  <div><div className="sr-label">Default Interview Type</div><div className="sr-sub">Pre-selected type when scheduling</div></div>
+                  <select className="form-select" style={{ width: 140 }} value={localDefaults.defaultType} onChange={e => { const val = e.target.value; setLocalDefaults(p => ({ ...p, defaultType: val })); onUpdateInterviewDefaults?.({ ...localDefaults, defaultType: val }); }}>
+                    <option>Screening</option>
+                    <option>Technical</option>
+                    <option>Final</option>
+                    <option>Culture</option>
+                  </select>
+                </div>
+              </div>
             </>
+          )}
+
+          {tab === 'account' && (
+            <div className="settings-section">
+              <div className="settings-sec-hd">Account</div>
+              <div className="settings-row">
+                <div>
+                  <div className="sr-label">Name</div>
+                  <div className="sr-sub">Primary account holder</div>
+                </div>
+                <span style={{ fontFamily: 'var(--mono)', fontSize: '0.78rem', color: 'var(--g2)' }}>{nameLabel}</span>
+              </div>
+              <div className="settings-row">
+                <div>
+                  <div className="sr-label">Email</div>
+                  <div className="sr-sub">Used for login and alerts</div>
+                </div>
+                <span style={{ fontFamily: 'var(--mono)', fontSize: '0.78rem', color: 'var(--g2)' }}>{emailLabel}</span>
+              </div>
+              <div className="settings-row">
+                <div>
+                  <div className="sr-label">Role</div>
+                  <div className="sr-sub">Permissions and access scope</div>
+                </div>
+                <span className={`s-role-badge ${getRoleClass(roleLabel)}`}>{roleLabel}</span>
+              </div>
+              <div className="settings-row">
+                <div>
+                  <div className="sr-label">Password</div>
+                  <div className="sr-sub">Last updated 30 days ago</div>
+                </div>
+                <button className="btn btn-ghost btn-sm" onClick={() => showToast('Password Reset', 'Password reset email sent.', 'green')}>
+                  Reset password
+                </button>
+              </div>
+            </div>
           )}
 
           {tab === 'notifications' && (
@@ -95,15 +217,37 @@ export default function Settings({ isDark, toggleTheme, auditLog, showToast }: P
 
           {tab === 'team' && (
             <div className="settings-section">
-              <div className="settings-sec-hd">Team Members <button className="btn btn-primary btn-sm">Invite</button></div>
-              {TEAM.map(m => (
-                <div key={m.email} className="team-row">
-                  <div className="team-av">{m.initials}</div>
-                  <div className="team-info"><div className="team-name">{m.name}</div><div className="team-email">{m.email}</div></div>
-                  <span className={`s-role-badge ${getRoleClass(m.role)}`}>{m.role}</span>
-                  <button className="btn btn-ghost btn-sm" style={{ marginLeft: 'auto' }}>Edit</button>
-                </div>
-              ))}
+              <div className="settings-sec-hd">
+                Team Members
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => setShowInvite(true)}
+                >
+                  Invite
+                </button>
+              </div>
+              {teamLoading ? (
+                <div style={{ padding: 16, color: 'var(--g3)', fontSize: '0.8rem' }}>Loading team…</div>
+              ) : teamError ? (
+                <div style={{ padding: 16, color: 'var(--red)', fontSize: '0.8rem' }}>{teamError}</div>
+              ) : teamMembers.length === 0 ? (
+                <div style={{ padding: 16, color: 'var(--g3)', fontSize: '0.8rem' }}>No team members found.</div>
+              ) : (
+                teamMembers.map(m => (
+                  <div key={m.id} className="team-row">
+                    <div className="team-av">{m.initials}</div>
+                    <div className="team-info"><div className="team-name">{m.name}</div><div className="team-email">{m.email}</div></div>
+                    <span className={`s-role-badge ${getRoleClass(m.role)}`}>{m.role}</span>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      style={{ marginLeft: 'auto' }}
+                      onClick={() => showToast('Edit team member', `${m.name} — role: ${m.role}`, 'blue')}
+                    >
+                      Edit
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           )}
 
@@ -125,9 +269,9 @@ export default function Settings({ isDark, toggleTheme, auditLog, showToast }: P
             <div className="settings-section">
               <div className="settings-sec-hd">Current Plan</div>
               <div className="settings-row"><div><div className="sr-label">Plan</div><div className="sr-sub">Billed monthly</div></div><span className="pill pill-purple"><span className="pill-dot" />Pro Team</span></div>
-              <div className="settings-row"><div><div className="sr-label">Seats</div><div className="sr-sub">4 of 10 used</div></div><span style={{ fontFamily: 'var(--mono)', fontSize: '0.76rem', color: 'var(--g2)' }}>4 / 10</span></div>
-              <div className="settings-row"><div><div className="sr-label">AI CV Analyses</div><div className="sr-sub">This billing cycle</div></div><span style={{ fontFamily: 'var(--mono)', fontSize: '0.76rem', color: 'var(--g2)' }}>247 / 500</span></div>
-              <div className="settings-row"><div><div className="sr-label">Next Invoice</div><div className="sr-sub">April 1, 2026</div></div><span style={{ fontFamily: 'var(--mono)', fontSize: '0.76rem', color: 'var(--g2)' }}>$149.00</span></div>
+              <div className="settings-row"><div><div className="sr-label">Seats</div><div className="sr-sub">5 of 12 used</div></div><span style={{ fontFamily: 'var(--mono)', fontSize: '0.76rem', color: 'var(--g2)' }}>5 / 12</span></div>
+              <div className="settings-row"><div><div className="sr-label">AI CV Analyses</div><div className="sr-sub">This billing cycle</div></div><span style={{ fontFamily: 'var(--mono)', fontSize: '0.76rem', color: 'var(--g2)' }}>198 / 600</span></div>
+              <div className="settings-row"><div><div className="sr-label">Next Invoice</div><div className="sr-sub">April 15, 2026</div></div><span style={{ fontFamily: 'var(--mono)', fontSize: '0.76rem', color: 'var(--g2)' }}>$189.00</span></div>
             </div>
           )}
 
@@ -138,8 +282,8 @@ export default function Settings({ isDark, toggleTheme, auditLog, showToast }: P
                 <button className="btn btn-primary btn-sm" onClick={() => showToast('Key Generated', 'hf_key_' + Math.random().toString(36).slice(2), 'green')}>Generate new key</button>
               </div>
               {[
-                { name: 'Production Key', created: 'Mar 1, 2026',  lastUsed: '2 min ago',  val: 'hf_prod_••••••••7a2f' },
-                { name: 'Staging Key',    created: 'Feb 10, 2026', lastUsed: '1 day ago',  val: 'hf_stg_••••••••9c1a'  },
+                { name: 'Production Key', created: 'Mar 6, 2026',  lastUsed: '5 min ago',  val: 'hf_prod_********2f8c' },
+                { name: 'Staging Key',    created: 'Feb 21, 2026', lastUsed: '3 days ago', val: 'hf_stg_********9d14'  },
               ].map(k => (
                 <div key={k.name} className="api-key-row">
                   <div className="api-key-name">
@@ -172,6 +316,12 @@ export default function Settings({ isDark, toggleTheme, auditLog, showToast }: P
           )}
         </div>
       </div>
+      {showInvite && (
+        <InviteUserModal
+          onClose={() => setShowInvite(false)}
+          onSubmit={handleInvite}
+        />
+      )}
     </div>
   );
 }

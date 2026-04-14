@@ -69,6 +69,16 @@ function computeScore(extract: Record<string, unknown>, match: Record<string, un
   return Math.min(100, Math.max(0, Math.round(raw)));
 }
 
+function simpleSkillScore(cvText: string, skillsCsv: string | undefined): number | null {
+  if (!skillsCsv) return null;
+  const skills = skillsCsv.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+  if (skills.length === 0) return null;
+  const text = cvText.toLowerCase();
+  const matched = skills.filter(skill => text.includes(skill)).length;
+  const ratio = matched / skills.length;
+  return Math.round(40 + ratio * 60);
+}
+
 //  Main pipeline processor 
 
 export async function runPipeline(
@@ -139,13 +149,28 @@ export async function runPipeline(
       matchResult = { overall_score: 65, category_scores: { skills: 65, experience: 60, education: 55 } };
     }
 
+    //  STEP 8.1: Deterministic skill-gap analysis (fast recruiter view)
+    let skillGap: Candidate['skillGap'] = null;
+    try {
+      skillGap = await analysisService.skillGap(
+        jdText,
+        cvText,
+        { requiredWeight: 1, niceWeight: 0.5 },
+        { applicationId: event.candidateId, jobId: event.jobId },
+      );
+    } catch (e) {
+      logger.warn('[Pipeline] Skill-gap unavailable â€” skipping', { error: String(e) });
+      skillGap = null;
+    }
+
     emitProgress(pipelineJob, 'SCORING', 90);
     await sleep(200);
 
     //  STEP 3.3: Output generation → candidate record 
-    const score  = computeScore(extractResult, matchResult);
+    const fallbackScore = simpleSkillScore(cvText, job.skills) ?? computeScore(extractResult, matchResult);
+    const score  = skillGap?.fitScore ?? fallbackScore;
     const name   = String(extractResult['name']  ?? event.candidateId);
-    const email  = String(extractResult['email'] ?? '');
+    const email  = String(event.email ?? extractResult['email'] ?? `${event.candidateId.toLowerCase().replace(/\s+/g,'.')}@candidate.com`);
 
     const candidate: Candidate = {
       id:       `c-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
@@ -154,10 +179,12 @@ export async function runPipeline(
       role:     job.title,
       stage:    'Applied',
       stageKey: 'Applied' as CandidateStageKey,
-      source:   'CV Upload',
+      source:   event.source ?? 'CV Upload',
       score,
       applied:  'Today',
       initials: makeInitials(name),
+      cvText:   cvText.slice(0, 12000),
+      skillGap,
     };
 
     emitProgress({ ...pipelineJob, status: 'COMPLETE', progress: 100 }, 'COMPLETE', 100);

@@ -37,6 +37,8 @@ export function ApplyPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [analysisScore, setAnalysisScore] = useState<number | null>(null);
+  const [analysisWarnings, setAnalysisWarnings] = useState<string[]>([]);
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -58,7 +60,7 @@ export function ApplyPage() {
     setSubmitError('');
 
     try {
-      await submitApplication(
+      const result = await submitApplication(
         job.id,
         {
           full_name: form.full_name,
@@ -69,6 +71,8 @@ export function ApplyPage() {
         },
         cv || undefined
       );
+      setAnalysisScore(result.analysis?.fitScore ?? null);
+      setAnalysisWarnings(result.warnings ?? []);
       setSubmitted(true);
     } catch (err: any) {
       setSubmitError(err.message || 'Submission failed. Please try again.');
@@ -125,6 +129,16 @@ export function ApplyPage() {
             <strong>{job.title}</strong> at {job.company} has been received.
             We'll be in touch.
           </p>
+          {analysisScore !== null && (
+            <div className="text-xs text-gray-500">
+              Analysis complete — score {analysisScore}/100
+            </div>
+          )}
+          {analysisWarnings.length > 0 && (
+            <div className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
+              {analysisWarnings[0]}
+            </div>
+          )}
         </div>
       </div>
     );

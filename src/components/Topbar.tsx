@@ -3,6 +3,7 @@ import {
   IconSearch, IconSun, IconMoon, IconBell, IconX,
 } from '@/shared/components/ui/Icons';
 import type { ViewId, Candidate, Job } from '@/types';
+import { useAuthStore } from '@/features/auth/store/authStore';
 
 // Searchable items type for unified search
 type SearchItem = { type: 'candidate' | 'job' | 'setting'; title: string; subtitle: string; id: string };
@@ -26,6 +27,10 @@ export default memo(function Topbar({
   const [query,   setQuery]   = useState('');
   const [results, setResults] = useState<SearchItem[]>([]);
   const [focused, setFocused] = useState(false);
+  const user = useAuthStore(s => s.user);
+  const avatarName = user?.name ?? 'Account';
+  const avatarRole = user?.role ?? 'User';
+  const avatarInitials = user?.initials ?? 'HF';
 
   const handleSearch = useCallback((val: string) => {
     setQuery(val);
@@ -198,11 +203,11 @@ export default memo(function Topbar({
         <div className="tb-divider" aria-hidden="true" />
 
         {/* Avatar */}
-        <button className="tb-avatar" aria-label="Account menu — Tino Dube (Admin)">
-          <span className="tb-av-initials">TD</span>
+        <button className="tb-avatar" aria-label={`Account menu — ${avatarName} (${avatarRole})`}>
+          <span className="tb-av-initials">{avatarInitials}</span>
           <div className="tb-av-info">
-            <span className="tb-av-name">Tino Dube</span>
-            <span className="tb-av-role">Admin</span>
+            <span className="tb-av-name">{avatarName}</span>
+            <span className="tb-av-role">{avatarRole}</span>
           </div>
         </button>
       </div>

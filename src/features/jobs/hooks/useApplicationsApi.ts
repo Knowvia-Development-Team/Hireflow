@@ -18,6 +18,8 @@ export interface Application {
   cover_letter: string | null;
   cv_url: string | null;
   cv_filename: string | null;
+  match_score?: number | null;
+  match_result?: unknown;
   status: 'new' | 'shortlisted' | 'rejected' | 'hired';
   notes: string | null;
   applied_at: string;
@@ -91,7 +93,7 @@ export function useApplicationsApi({ jobId, statusFilter = '' }: UseApplications
       cover_letter?: string;
     },
     cvFile?: File
-  ): Promise<{ success: boolean; message: string }> => {
+  ): Promise<{ success: boolean; message: string; analysis?: { fitScore: number }; warnings?: string[] }> => {
     const body = new FormData();
     body.append('job_id', jobId);
     body.append('full_name', data.full_name);
@@ -111,7 +113,7 @@ export function useApplicationsApi({ jobId, statusFilter = '' }: UseApplications
       throw new Error(result.error || 'Failed to submit application');
     }
     
-    return { success: true, message: result.message };
+    return { success: true, message: result.message, analysis: result.analysis ?? undefined, warnings: result.warnings ?? undefined };
   };
 
   return {

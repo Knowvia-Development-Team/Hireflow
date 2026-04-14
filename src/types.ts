@@ -44,6 +44,8 @@ export interface CVUploadEvent {
   fileKey:      string;
   fileName:     string;
   uploadedAt:   string;
+  email?:       string;
+  source?:      string;
 }
 
 export interface PipelineJob {
@@ -113,6 +115,56 @@ export interface Candidate {
   score:    number;      // 0-100
   applied:  string;
   initials: string;
+  createdAt?: string | null;
+  appliedAt?: string | null;
+  screeningAt?: string | null;
+  interviewAt?: string | null;
+  finalAt?: string | null;
+  offerAt?: string | null;
+  hiredAt?: string | null;
+  rejectedAt?: string | null;
+  // AI Analysis fields
+  extractedData?: ExtractResult | null;
+  matchResult?: MatchResult | null;
+  sentimentResult?: SentimentResult | null;
+  cvText?: string | null;
+  cvUrl?: string | null;
+  cvFilename?: string | null;
+  skillGap?: SkillGapResult | null;
+  aiAnalyzedAt?: string | null;
+}
+
+// ── Interview Scores ───────────────────────────────────────────────────────────
+
+export interface InterviewScore {
+  id:            string;
+  candidateId:   string;
+  candidateName: string;
+  candidateEmail: string;
+  jobId:         string;
+  jobTitle:      string;
+  score:         number;
+  interviewer:   string;
+  comments:      string | null;
+  interviewDate: string;
+  createdAt:     string;
+}
+
+export interface LeaderboardEntry extends InterviewScore {
+  rank: number;
+}
+
+// ── History Records ────────────────────────────────────────────────────────────
+
+export interface HistoryRecord {
+  id:        string;
+  name:      string;
+  email:     string;
+  status:    'rejected' | 'hired';
+  jobTitle:  string;
+  jobId:     string;
+  appliedAt: string;
+  decidedAt: string;
 }
 
 // ── Interviews ────────────────────────────────────────────────────────────────
@@ -121,7 +173,7 @@ export type InterviewType   = 'Screening' | 'Technical' | 'Final' | 'Culture';
 export type InterviewStatus = 'Scheduled' | 'Completed' | 'Cancelled' | 'No-show';
 
 export interface Interview {
-  id:           number;
+  id:           string;
   candidate:    string;
   role:         string;
   type:         InterviewType;
@@ -177,7 +229,8 @@ export interface Toast {
 
 export type ViewId =
   | 'dashboard' | 'candidates' | 'profile'
-  | 'jobs'      | 'schedule'   | 'connections' | 'settings';
+  | 'jobs'      | 'schedule'   | 'connections' | 'settings'
+  | 'history'   | 'scores';
 
 export type ModalId =
   | 'new-job' | 'add-cand' | 'schedule' | 'ai-analyse' | null;
@@ -222,6 +275,9 @@ export interface PortalFormData {
   portfolio: string;
   cover:     string;
   source:    string;
+  cvText?:   string;
+  cvUrl?:    string | null;
+  cvFilename?: string | null;
 }
 
 // ── AI Analysis (Hugging Face backend responses) ─────────────────────────────
@@ -256,6 +312,10 @@ export interface ExtractResult {
   completeness_notes?: string;
   strengths?:          string[];
   red_flags?:          string[];
+  _meta?: {
+    analysis_version: string;
+    pii_redactions: number;
+  };
 }
 
 export interface CategoryScores {
@@ -283,6 +343,13 @@ export interface MatchResult {
   interview_questions?: string[];
   risks?:               string[];
   category_scores?:     CategoryScores;
+  _meta?: {
+    semantic_score?: number;
+    keyword_score?: number;
+    qualitative_score?: number;
+    analysis_version?: string;
+    pii_redactions?: number;
+  };
 }
 
 export interface SentimentResult {
@@ -301,12 +368,37 @@ export interface SentimentResult {
   readability?:           string;
   key_themes?:            string[];
   word_count?:            number;
+  _meta?: {
+    analysis_version: string;
+    pii_redactions: number;
+  };
 }
 
-export type AnalysisResultData = ExtractResult | MatchResult | SentimentResult;
+export interface SkillGapStrength {
+  skill: string;
+  evidence: string[];
+}
+
+export interface SkillGapMissing {
+  skill: string;
+  reason: string;
+}
+
+export interface SkillGapResult {
+  fitScore: number; // 0-100
+  confidence: number;
+  needsReview: boolean;
+  explanations: string[];
+  version: string;
+  strengths: SkillGapStrength[];
+  missing: SkillGapMissing[];
+  summary: string[]; // 3-6 bullets
+}
+
+export type AnalysisResultData = ExtractResult | MatchResult | SentimentResult | SkillGapResult;
 
 export interface AnalysisResult {
-  type: 'extract' | 'match' | 'sentiment';
+  type: 'extract' | 'match' | 'sentiment' | 'skill-gap';
   data: AnalysisResultData;
 }
 

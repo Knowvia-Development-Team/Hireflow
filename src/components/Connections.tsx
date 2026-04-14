@@ -1,5 +1,5 @@
 import { IconCheck } from '@/shared/components/ui/Icons';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { EMAIL_TEMPLATES } from '@/data';
 import type { Email, ToastColor } from '@/types';
 import { ComposeEmailModal, type ComposeEmailData } from './Modals';
@@ -11,13 +11,19 @@ interface Props {
 }
 
 export default function Connections({ emails, setEmails, showToast }: Props): JSX.Element {
-  const [selected,   setSelected]   = useState<Email>(emails[0]!);
+  const [selected,   setSelected]   = useState<Email | null>(emails[0] ?? null);
   const [replyText,  setReplyText]  = useState('');
   const [emailType,  setEmailType]  = useState('Reply');
   const [showCompose, setShowCompose] = useState(false);
 
+  useEffect(() => {
+    if (!selected && emails.length > 0) {
+      setSelected(emails[0] ?? null);
+    }
+  }, [emails, selected]);
+
   const sendEmail = (): void => {
-    if (!replyText.trim()) return;
+    if (!replyText.trim() || !selected) return;
     showToast('Email Sent', `Reply sent to ${selected.from}`, 'green');
     setReplyText('');
     setEmails(prev => prev.map(e => e.id === selected.id ? { ...e, unread: false } : e));
@@ -41,8 +47,13 @@ export default function Connections({ emails, setEmails, showToast }: Props): JS
           <div className="conn-search">
             <input className="conn-search-input" placeholder="Search messages…" />
           </div>
+          {emails.length === 0 && (
+            <div style={{ padding: 16, color: 'var(--g3)', fontSize: '0.8rem' }}>
+              No messages yet.
+            </div>
+          )}
           {emails.map(e => (
-            <div key={e.id} className={`conn-item${selected.id === e.id ? ' active' : ''}`} onClick={() => setSelected(e)}>
+            <div key={e.id} className={`conn-item${selected?.id === e.id ? ' active' : ''}`} onClick={() => setSelected(e)}>
               <span className="ci-time">{e.time}</span>
               <div className="ci-name">
                 {e.unread && <span className="unread-dot" />}
@@ -57,19 +68,19 @@ export default function Connections({ emails, setEmails, showToast }: Props): JS
         {/* Email pane */}
         <div className="email-pane">
           <div className="email-top">
-            <div className="email-subject">{selected.subject}</div>
+            <div className="email-subject">{selected?.subject ?? 'No message selected'}</div>
             <div className="email-from">
               <div className="email-av">
-                {selected.from.split(' ').map(n => n[0] ?? '').join('')}
+                {(selected?.from ?? '').split(' ').map(n => n[0] ?? '').join('')}
               </div>
               <div>
-                <div className="email-sender-name">{selected.from}</div>
-                <div className="email-addr">{selected.addr}</div>
+                <div className="email-sender-name">{selected?.from ?? ''}</div>
+                <div className="email-addr">{selected?.addr ?? ''}</div>
               </div>
-              <div className="email-time">{selected.time}</div>
+              <div className="email-time">{selected?.time ?? ''}</div>
             </div>
           </div>
-          <div className="email-body-wrap">{selected.body}</div>
+          <div className="email-body-wrap">{selected?.body ?? ''}</div>
           <div className="email-compose">
             <div className="compose-toolbar">
               <span style={{ fontFamily: 'var(--mono)', fontSize: '0.6rem', color: 'var(--g3)', letterSpacing: 1 }}>TEMPLATE:</span>
@@ -97,6 +108,19 @@ export default function Connections({ emails, setEmails, showToast }: Props): JS
         <ComposeEmailModal
           onClose={() => setShowCompose(false)}
           onSubmit={(data: ComposeEmailData) => {
+            const newEmail: Email = {
+              id: 'e' + Date.now().toString(),
+              from: 'You',
+              addr: data.to,
+              subject: data.subject,
+              preview: data.body.substring(0, 60) + (data.body.length > 60 ? '...' : ''),
+              time: 'Just now',
+              unread: false,
+              body: data.body,
+            };
+            setEmails(prev => [newEmail, ...prev]);
+            setSelected(newEmail);
+            setReplyText('');
             showToast('Email Sent', `Email sent to ${data.to}`, 'green');
           }}
         />

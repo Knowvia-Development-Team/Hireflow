@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { triggerCVPipeline } from '@/features/pipeline/services/cvPipeline';
 import { IconCpu, IconCheck, IconAlertTriangle, IconPaperclip, IconLoader, IconArrowRight } from '@/shared/components/ui/Icons';
-import { parseOrThrow }       from '@/shared/lib/validators';
+import { parseOrThrow } from '@/shared/lib/validators';
 import { PortalApplicationSchema } from '@/shared/lib/validators';
-import { logger }             from '@/shared/lib/logger';
+import { logger } from '@/shared/lib/logger';
 import type { Job, PortalFormData, Candidate, CVUploadEvent } from '@/types';
 
 interface Props {
@@ -18,6 +18,7 @@ const EMPTY: PortalFormData = {
   fname:'', lname:'', email:'', phone:'', location:'',
   linkedin:'', portfolio:'', cover:'', source:'',
 };
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export default function ApplicationPortal({ job, onClose, onSubmit, onPipelineComplete }: Props): JSX.Element {
   const [form,       setForm]       = useState<PortalFormData>(EMPTY);
@@ -25,13 +26,72 @@ export default function ApplicationPortal({ job, onClose, onSubmit, onPipelineCo
   const [submitting, setSubmitting] = useState(false);
   const [error,      setError]      = useState('');
   const [cvText,     setCvText]     = useState('');
+  const [cvUrl,      setCvUrl]      = useState<string | null>(null);
+  const [cvFilename, setCvFilename] = useState<string | null>(null);
+  const [cvFileName, setCvFileName] = useState('');
+  const [cvFile,     setCvFile]     = useState<File | null>(null);
+  const [cvUploadMsg, setCvUploadMsg] = useState('');
+  const [cvUploading, setCvUploading] = useState(false);
   const [pipelineMsg,setPipelineMsg]= useState('');
+  const isOpen = job.status === 'Open';
 
   const set = (k: keyof PortalFormData) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>): void =>
       setForm(p => ({ ...p, [k]: e.target.value }));
 
+  const handleFileUpload = async (file: File): Promise<void> => {
+    setCvUploading(true);
+    setCvUploadMsg('');
+    try {
+      const body = new FormData();
+      body.append('cv', file);
+      const res = await fetch(`${API_URL}/api/applications/cv-text`, { method: 'POST', body });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to read CV');
+      setCvFileName(file.name);
+      setCvFile(file);
+      setCvText(data.text || '');
+      setCvUrl(data.cv_url ?? null);
+      setCvFilename(data.cv_filename ?? file.name);
+      if ((data.warnings ?? []).length > 0) {
+        setCvUploadMsg(data.warnings[0]);
+      }
+    } catch (e) {
+      setCvUploadMsg(e instanceof Error ? e.message : 'CV upload failed');
+    } finally {
+      setCvUploading(false);
+    }
+  };
+
+  const persistApplication = async (): Promise<void> => {
+    const body = new FormData();
+    body.append('job_id', job.id);
+    body.append('full_name', `${form.fname} ${form.lname}`.trim());
+    body.append('email', form.email);
+    if (form.phone) body.append('phone', form.phone);
+    if (form.linkedin) body.append('linkedin_url', form.linkedin);
+    if (form.cover) body.append('cover_letter', form.cover);
+    if (form.source) body.append('source', form.source);
+    if (cvFile) {
+      body.append('cv', cvFile);
+    } else if (cvText) {
+      body.append('cv_text', cvText);
+      if (cvUrl) body.append('cv_url', cvUrl);
+      if (cvFilename) body.append('cv_filename', cvFilename);
+    }
+
+    const res = await fetch(`${API_URL}/api/applications`, { method: 'POST', body });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to submit application');
+    }
+  };
+
   const handleSubmit = (): void => {
+    if (!isOpen) {
+      setError('Applications for this role are currently paused.');
+      return;
+    }
     try {
       parseOrThrow(PortalApplicationSchema, form);
     } catch (e) {
@@ -42,42 +102,51 @@ export default function ApplicationPortal({ job, onClose, onSubmit, onPipelineCo
     setSubmitting(true);
 
     setTimeout(() => {
-      setSubmitting(false);
-      setSubmitted(true);
+      void (async () => {
+        try {
+          await persistApplication();
+        } catch (e) {
+          setSubmitting(false);
+          setError(e instanceof Error ? e.message : 'Failed to submit application');
+          return;
+        }
 
-      // ── Step 1: Notify parent (legacy path — keeps portal working without pipeline) ──
-      onSubmit(form, job);
+        setSubmitting(false);
+        setSubmitted(true);
 
-      // ── Step 2: Trigger automated CV analysis pipeline ────────────────────
-      const candidateId = `${form.fname} ${form.lname}`.trim();
-      const event: CVUploadEvent = {
-        candidateId,
-        jobId:      job.id,
-        fileKey:    `cv-${Date.now()}.txt`,
-        fileName:   `${candidateId.replace(/\s+/g,'-')}-cv.txt`,
-        uploadedAt: new Date().toISOString(),
-      };
+        // Step 1: Notify parent (UI sync)
+        onSubmit({ ...form, cvText, cvUrl, cvFilename }, job);
 
-      // Use cover letter + any pasted CV text as the analysis input
-      const analysisText = [
-        `Candidate: ${candidateId}`,
-        `Email: ${form.email}`,
-        `Phone: ${form.phone ?? ''}`,
-        `Location: ${form.location ?? ''}`,
-        `LinkedIn: ${form.linkedin ?? ''}`,
-        cvText ? `CV Content:\n${cvText}` : '',
-        form.cover ? `Cover Note:\n${form.cover}` : '',
-      ].filter(Boolean).join('\n\n');
+        // Step 2: Trigger automated CV analysis pipeline
+        const candidateId = `${form.fname} ${form.lname}`.trim();
+        const event: CVUploadEvent = {
+          candidateId,
+          jobId:      job.id,
+          fileKey:    `cv-${Date.now()}.txt`,
+          fileName:   `${candidateId.replace(/\s+/g,'-')}-cv.txt`,
+          uploadedAt: new Date().toISOString(),
+          email:      form.email,
+          source:     form.source || 'Direct',
+        };
 
-      setPipelineMsg('Analysing your CV automatically…');
+        const analysisText = [
+          `Candidate: ${candidateId}`,
+          `Email: ${form.email}`,
+          `Phone: ${form.phone ?? ''}`,
+          `Location: ${form.location ?? ''}`,
+          `LinkedIn: ${form.linkedin ?? ''}`,
+          cvText ? `CV Content:\n${cvText}` : '',
+          form.cover ? `Cover Note:\n${form.cover}` : '',
+        ].filter(Boolean).join('\n\n');
 
-      // NON-BLOCKING: fire and forget
-      triggerCVPipeline(event, analysisText, job, (candidate) => {
-        logger.info('[Portal] Pipeline produced candidate', { id: candidate.id, score: candidate.score });
-        setPipelineMsg(`Analysis complete — score ${candidate.score}/100`);
-        onPipelineComplete?.(candidate);
-      });
+        setPipelineMsg('Analysing your CV automatically...');
 
+        triggerCVPipeline(event, analysisText, job, (candidate) => {
+          logger.info('[Portal] Pipeline produced candidate', { id: candidate.id, score: candidate.score });
+          setPipelineMsg(`Analysis complete — score ${candidate.score}/100`);
+          onPipelineComplete?.(candidate);
+        });
+      })();
     }, 1500);
   };
 
@@ -110,6 +179,11 @@ export default function ApplicationPortal({ job, onClose, onSubmit, onPipelineCo
           </div>
         ) : (
           <>
+            {!isOpen && (
+              <div style={{ background:'rgba(234,179,8,0.1)', border:'1px solid rgba(234,179,8,0.3)', borderRadius:7, padding:'10px 12px', fontSize:'0.8rem', color:'var(--amber)', marginBottom:12 }}>
+                <IconAlertTriangle size={13} style={{ flexShrink:0 }} /> Applications are paused for this role. Please check back later.
+              </div>
+            )}
             {error && (
               <div style={{ background:'rgba(220,38,38,0.06)', border:'1px solid rgba(220,38,38,0.2)', borderRadius:7, padding:'10px 12px', fontSize:'0.8rem', color:'var(--red)', marginBottom:12 }}>
                 <IconAlertTriangle size={13} style={{ flexShrink:0 }} /> {error}
@@ -132,6 +206,22 @@ export default function ApplicationPortal({ job, onClose, onSubmit, onPipelineCo
             <div className="portal-section-title" style={{ marginTop:20 }}>CV / Resume</div>
             <div className="portal-field">
               <label className="portal-label">Paste your CV text (for instant AI analysis)</label>
+              <label className="portal-cv-drop" style={{ marginBottom: 10 }}>
+                <div className="portal-cv-icon"><IconPaperclip size={20} /></div>
+                <div className="portal-cv-text">
+                  {cvUploading ? 'Reading CV…' : (cvFileName || 'Upload PDF, DOC or DOCX')}
+                </div>
+                <div className="portal-cv-sub">We’ll extract text automatically</div>
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  className="hidden"
+                  onChange={e => {
+                    const file = e.currentTarget.files?.[0];
+                    if (file) void handleFileUpload(file);
+                  }}
+                />
+              </label>
               <textarea
                 className="portal-input portal-textarea"
                 rows={6}
@@ -142,6 +232,9 @@ export default function ApplicationPortal({ job, onClose, onSubmit, onPipelineCo
               <p style={{ fontSize:'0.7rem', color:'var(--g3)', marginTop:4 }}>
                 <IconPaperclip size={11} style={{ flexShrink:0 }} /> CV text is automatically processed by our AI pipeline once you submit.
               </p>
+              {cvUploadMsg && (
+                <p style={{ fontSize:'0.7rem', color:'var(--amber)', marginTop:4 }}>{cvUploadMsg}</p>
+              )}
             </div>
 
             <div className="portal-section-title" style={{ marginTop:20 }}>Cover Note</div>
@@ -157,7 +250,7 @@ export default function ApplicationPortal({ job, onClose, onSubmit, onPipelineCo
               </select>
             </div>
 
-            <button className="portal-submit" disabled={submitting} onClick={handleSubmit}>
+            <button className="portal-submit" disabled={submitting || !isOpen} onClick={handleSubmit}>
               {submitting
                 ? <span style={{display:'flex',alignItems:'center',gap:6}}><IconLoader size={13}/> Submitting…</span>
                 : <span style={{display:'flex',alignItems:'center',gap:6}}><IconArrowRight size={13}/> Submit Application</span>}

@@ -106,7 +106,7 @@ export async function autoScheduleInterview(
 
   // 3. Build interview record
   const interview: Interview = {
-    id:           Date.now(),
+    id:           Date.now().toString(),
     candidate:    candidate.name,
     role:         job.title,
     type:         'Screening',

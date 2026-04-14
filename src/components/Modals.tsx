@@ -196,13 +196,13 @@ export function AddCandidateModal({ onClose, onSubmit }: AddCandProps): JSX.Elem
 
 // ── Schedule Interview ───────────────────────────────────────────────────────
 
-interface SchedProps { onClose: () => void; onSubmit: (f: NewInterviewFormData) => void; candidates: Candidate[]; }
+interface SchedProps { onClose: () => void; onSubmit: (f: NewInterviewFormData) => void; candidates: Candidate[]; interviewDefaults?: { defaultDuration: number; defaultType: string }; }
 
-export function ScheduleModal({ onClose, onSubmit, candidates }: SchedProps): JSX.Element {
+export function ScheduleModal({ onClose, onSubmit, candidates, interviewDefaults }: SchedProps): JSX.Element {
   const [form, setForm] = useState<NewInterviewFormData>({
     candidate: candidates[0]?.name ?? '',
-    type: 'Screening', date: '2026-03-22', time: '10:00',
-    duration: 60, interviewers: 'Tino Dube', notes: '',
+    type: interviewDefaults?.defaultType ?? 'Screening', date: '2026-03-22', time: '10:00',
+    duration: interviewDefaults?.defaultDuration ?? 60, interviewers: 'Tino Dube', notes: '',
   });
   const set = (k: keyof NewInterviewFormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm(p => ({ ...p, [k]: e.target.value }));
@@ -294,6 +294,62 @@ export function ComposeEmailModal({ onClose, onSubmit }: ComposeEmailProps): JSX
       <div className="form-field">
         <label className="form-label">Message</label>
         <textarea className="form-input" rows={6} placeholder="Write your email message…" value={form.body} onChange={set('body')} />
+      </div>
+    </ModalShell>
+  );
+}
+
+// ── Invite Team Member ─────────────────────────────────────────────────────────
+
+export interface InviteUserData {
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface InviteUserProps {
+  onClose: () => void;
+  onSubmit: (f: InviteUserData) => void;
+}
+
+export function InviteUserModal({ onClose, onSubmit }: InviteUserProps): JSX.Element {
+  const [form, setForm] = useState<InviteUserData>({
+    name: '',
+    email: '',
+    role: 'Recruiter',
+  });
+
+  const set = (k: keyof InviteUserData) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setForm(p => ({ ...p, [k]: e.target.value }));
+
+  const handleSubmit = () => {
+    if (!form.name.trim() || !form.email.trim()) return;
+    onSubmit(form);
+    onClose();
+  };
+
+  return (
+    <ModalShell title="Invite Team Member" onClose={onClose}
+      footer={<><button className="btn btn-ghost" onClick={onClose}>Cancel</button><button className="btn btn-primary" onClick={handleSubmit} disabled={!form.name.trim() || !form.email.trim()}>Send Invite →</button></>}>
+      <div className="form-field">
+        <label className="form-label">Full Name *</label>
+        <input className="form-input" placeholder="e.g. Asha Moyo" value={form.name} onChange={set('name')} />
+      </div>
+      <div className="form-field">
+        <label className="form-label">Email *</label>
+        <input className="form-input" type="email" placeholder="asha@company.com" value={form.email} onChange={set('email')} />
+      </div>
+      <div className="form-field">
+        <label className="form-label">Role</label>
+        <select className="form-select" value={form.role} onChange={set('role')}>
+          <option>Admin</option>
+          <option>Recruiter</option>
+          <option>Interviewer</option>
+          <option>Read-only</option>
+        </select>
+      </div>
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--bor)', borderRadius: 7, padding: '10px 12px', fontSize: '0.74rem', color: 'var(--g3)' }}>
+        We will generate a temporary password and show it after sending the invite.
       </div>
     </ModalShell>
   );

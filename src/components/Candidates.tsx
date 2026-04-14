@@ -15,6 +15,8 @@ interface Props {
 export default function Candidates({ candidates, showProfile, openModal }: Props): JSX.Element {
   const [filter, setFilter] = useState<StageFilter>('all');
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [previewCandidate, setPreviewCandidate] = useState<Candidate | null>(null);
+  const [showFullCv, setShowFullCv] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,9 +82,9 @@ export default function Candidates({ candidates, showProfile, openModal }: Props
       <div className="card">
         <div
           role="row"
-          style={{ display:'grid', gridTemplateColumns:'32px 1fr 110px 140px 90px 70px 70px', gap:10, padding:'8px 16px', borderBottom:'1px solid var(--bor2)' }}
+          style={{ display:'grid', gridTemplateColumns:'32px 1fr 110px 140px 90px 70px 70px 80px', gap:10, padding:'8px 16px', borderBottom:'1px solid var(--bor2)' }}
         >
-          {['','Name','Stage','Role','Source','CV Score','Applied'].map((h,i) => (
+          {['','Name','Stage','Role','Source','Fit','Applied','CV'].map((h,i) => (
             <div key={i} role="columnheader" style={{ fontFamily:'var(--mono)', fontSize:'0.58rem', letterSpacing:'1.5px', textTransform:'uppercase', color:'var(--g3)' }}>{h}</div>
           ))}
         </div>
@@ -94,7 +96,10 @@ export default function Candidates({ candidates, showProfile, openModal }: Props
         )}
 
         {filtered.map(c => {
-          const pips = getScorePips(c.score);
+          const fitScore = c.skillGap?.fitScore ?? (c.score > 0 ? c.score : null);
+          const pips = fitScore == null
+            ? Array.from({ length: 5 }, () => 'var(--bor2)')
+            : getScorePips(fitScore);
           const isNew = c.stage === 'NEW';
           return (
             <div
@@ -120,10 +125,22 @@ export default function Candidates({ candidates, showProfile, openModal }: Props
               <div><span className={`pill ${getPillClass(c.stage)}`}><span className="pill-dot" aria-hidden="true" />{c.stage}</span></div>
               <div style={{ fontSize:'0.8rem', color:'var(--g2)' }}>{c.role}</div>
               <div><span className={`source-tag ${getSourceClass(c.source)}`}>{c.source}</span></div>
-              <div className="score-pips" aria-label={`CV score ${c.score} out of 100`}>
+              <div className="score-pips" aria-label={fitScore == null ? 'Fit score pending' : `Fit score ${fitScore} out of 100`}>
                 {pips.map((color,i) => <div key={i} className="pip" style={{ background:color }} />)}
               </div>
               <div style={{ fontFamily:'var(--mono)', fontSize:'0.62rem', color:'var(--g3)' }}>{c.applied}</div>
+              <div>
+                {c.cvText ? (
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    onClick={(e) => { e.stopPropagation(); setPreviewCandidate(c); setShowFullCv(false); }}
+                  >
+                    Preview
+                  </button>
+                ) : (
+                  <span style={{ fontFamily:'var(--mono)', fontSize:'0.62rem', color:'var(--g3)' }}>—</span>
+                )}
+              </div>
             </div>
           );
         })}
@@ -179,6 +196,44 @@ export default function Candidates({ candidates, showProfile, openModal }: Props
                 onChange={handleFileUpload}
                 style={{ display: 'none' }}
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CV Preview Modal */}
+      {previewCandidate && (
+        <div className="modal-back" onClick={e => { if (e.target === e.currentTarget) setPreviewCandidate(null); }}>
+          <div className="modal" style={{ maxWidth: 640 }}>
+            <div className="modal-hd">
+              <span className="modal-title">CV Preview — {previewCandidate.name}</span>
+              <button className="modal-x" onClick={() => setPreviewCandidate(null)} aria-label="Close">×</button>
+            </div>
+            <div className="modal-body">
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+                <div style={{ fontSize:'0.78rem', color:'var(--g3)' }}>{previewCandidate.email}</div>
+                <button className="btn btn-ghost btn-sm" onClick={() => setShowFullCv(p => !p)}>
+                  {showFullCv ? 'Collapse' : 'View full'}
+                </button>
+              </div>
+              <div style={{
+                whiteSpace:'pre-wrap',
+                fontSize:'0.82rem',
+                color:'var(--g2)',
+                lineHeight:1.6,
+                maxHeight: showFullCv ? 360 : 200,
+                overflow:'auto',
+                border:'1px solid var(--bor)',
+                borderRadius:8,
+                padding:12,
+                background:'var(--bg3)',
+              }}>
+                {showFullCv
+                  ? previewCandidate.cvText
+                  : (previewCandidate.cvText ?? '').length > 900
+                    ? `${previewCandidate.cvText?.slice(0, 900)}…`
+                    : previewCandidate.cvText}
+              </div>
             </div>
           </div>
         </div>
