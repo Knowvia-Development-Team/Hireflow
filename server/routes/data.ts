@@ -170,8 +170,13 @@ router.get('/jobs/:id', async (req: Request, res: Response): Promise<void> => {
 router.put('/jobs/:id', async (req: Request, res: Response): Promise<void> => {
   try {
     const { title, dept, type, location, status, salary, skills, description, applicants } = req.body;
-    const current = await query('SELECT id, title, status FROM jobs WHERE id = $1', [req.params.id]);
-    const currentJob = current[0] ?? null;
+   type CurrentJobRow = { id: string; title: string; status: string | null };
+
+const current = await query<CurrentJobRow>(
+  'SELECT id, title, status FROM jobs WHERE id = $1',
+  [req.params.id]
+);
+const currentJob = current[0] ?? null;
     const result = await query(
       `UPDATE jobs SET title=$1, dept=$2, type=$3, location=$4, status=$5, salary=$6, skills=$7, description=$8, applicants=$9, updated_at=NOW()
        WHERE id=$10 RETURNING *`,
