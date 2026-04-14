@@ -25,7 +25,12 @@ COPY --from=builder /app/dist ./dist
 
 # Non-root user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+# Allow runtime uploads in container
+RUN mkdir -p /app/uploads/cvs && chown -R appuser:appgroup /app/uploads
+
 USER appuser
+
 
 ENV NODE_ENV=production
 EXPOSE 3001
